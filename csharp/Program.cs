@@ -6,7 +6,7 @@ namespace Ryu
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            // Converted from c version
         }
     }
 }
