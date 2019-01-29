@@ -1,5 +1,4 @@
-﻿Imports System
-Imports System.Runtime.CompilerServices
+﻿Imports System.Runtime.CompilerServices
 Imports System.Runtime.InteropServices
 
 Module SingleToString
@@ -16,7 +15,7 @@ Module SingleToString
     Private ReadOnly FLOAT_POW5_SPLIT() As ULong = {1152921504606846976UL, 1441151880758558720UL, 1801439850948198400UL, 2251799813685248000UL, 1407374883553280000UL, 1759218604441600000UL, 2199023255552000000UL, 1374389534720000000UL, 1717986918400000000UL, 2147483648000000000UL, 1342177280000000000UL, 1677721600000000000UL, 2097152000000000000UL, 1310720000000000000UL, 1638400000000000000UL, 2048000000000000000UL, 1280000000000000000UL, 1600000000000000000UL, 2000000000000000000UL, 1250000000000000000UL, 1562500000000000000UL, 1953125000000000000UL, 1220703125000000000UL, 1525878906250000000UL, 1907348632812500000UL, 1192092895507812500UL, 1490116119384765625UL, 1862645149230957031UL, 1164153218269348144UL, 1455191522836685180UL, 1818989403545856475UL, 2273736754432320594UL, 1421085471520200371UL, 1776356839400250464UL, 2220446049250313080UL, 1387778780781445675UL, 1734723475976807094UL, 2168404344971008868UL, 1355252715606880542UL, 1694065894508600678UL, 2117582368135750847UL, 1323488980084844279UL, 1654361225106055349UL, 2067951531382569187UL, 1292469707114105741UL, 1615587133892632177UL, 2019483917365790221UL}
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function pow5Factor(value As UInteger) As UInteger
+    Private Function Pow5Factor(value As UInteger) As UInteger
         Dim count As UInteger = 0
         Do
             Dim q As UInteger = value \ 5UI
@@ -32,13 +31,13 @@ Module SingleToString
 
     ' Returns true if value is divisible by 5^p.
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function multipleOfPowerOf5(value As UInteger, p As UInteger) As Boolean
-        Return pow5Factor(value) >= p
+    Private Function MultipleOfPowerOf5(value As UInteger, p As UInteger) As Boolean
+        Return Pow5Factor(value) >= p
     End Function
 
     ' Returns true if value is divisible by 2^p.
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function multipleOfPowerOf2(value As UInteger, p As Integer) As Boolean
+    Private Function MultipleOfPowerOf2(value As UInteger, p As Integer) As Boolean
         ' return __builtin_ctz(value) >= p;
         Return (value And ((1UI << p) - 1)) = 0
     End Function
@@ -46,7 +45,7 @@ Module SingleToString
     ' It seems to be slightly faster to avoid uint128_t here, although the
     ' generated code for uint128_t looks slightly nicer.
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function mulShift(m As UInteger, factor As ULong, shift As Integer) As UInteger
+    Private Function MulShift(m As UInteger, factor As ULong, shift As Integer) As UInteger
         ' The casts here help MSVC to avoid calls to the __allmul library
         ' function.
         Dim factorLo As UInteger = CUInt(factor)
@@ -72,54 +71,57 @@ Module SingleToString
     End Function
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function mulPow5InvDivPow2(m As UInteger, q As UInteger, j As Integer) As UInteger
-        Return mulShift(m, FLOAT_POW5_INV_SPLIT(CInt(q)), j)
+    Private Function MulPow5InvDivPow2(m As UInteger, q As UInteger, j As Integer) As UInteger
+        Return MulShift(m, FLOAT_POW5_INV_SPLIT(CInt(q)), j)
     End Function
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function mulPow5divPow2(m As UInteger, i As UInteger, j As Integer) As UInteger
-        Return mulShift(m, FLOAT_POW5_SPLIT(CInt(i)), j)
+    Private Function MulPow5divPow2(m As UInteger, i As UInteger, j As Integer) As UInteger
+        Return MulShift(m, FLOAT_POW5_SPLIT(CInt(i)), j)
     End Function
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function decimalLength(v As UInteger) As Integer
+    Private Function DecimalLength(v As UInteger) As Integer
         ' Function precondition: v is not a 10-digit number.
         ' (9 digits are sufficient for round-tripping.)
-        If v >= 100000000 Then
-            Return 9
+        If v >= 10000UI Then
+            If v >= 1000000UI Then
+                If v >= 100000000UI Then
+                    Return 9
+                End If
+                If v >= 10000000UI Then
+                    Return 8
+                End If
+                Return 7
+            Else
+                If v >= 100000UI Then
+                    Return 6
+                End If
+                Return 5
+            End If
+        Else
+            If v >= 100UI Then
+                If v >= 1000UI Then
+                    Return 4
+                End If
+                Return 3
+            Else
+                If v >= 10UI Then
+                    Return 2
+                End If
+                Return 1
+            End If
         End If
-        If v >= 10000000 Then
-            Return 8
-        End If
-        If v >= 1000000 Then
-            Return 7
-        End If
-        If v >= 100000 Then
-            Return 6
-        End If
-        If v >= 10000 Then
-            Return 5
-        End If
-        If v >= 1000 Then
-            Return 4
-        End If
-        If v >= 100 Then
-            Return 3
-        End If
-        If v >= 10 Then
-            Return 2
-        End If
-        Return 1
     End Function
 
     ' A floating decimal representing m * 10^e.
-    Private Structure floating_decimal_32
-        Public mantissa As UInteger
-        Public exponent As Integer
+    Private Structure FloatingDecimal32
+        Public Mantissa As UInteger
+        Public Exponent As Integer
     End Structure
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function f2d(ieeeMantissa As UInteger, ieeeExponent As UInteger) As floating_decimal_32
+    Private Function CreateFloatingDecimal32(ieeeMantissa As UInteger, ieeeExponent As UInteger) As FloatingDecimal32
         Dim e2 As Integer
         Dim m2 As UInteger
         If ieeeExponent = 0 Then
@@ -151,13 +153,13 @@ Module SingleToString
         Dim vrIsTrailingZeros As Boolean = False
         Dim lastRemovedDigit As Byte = 0
         If e2 >= 0 Then
-            Dim q As UInteger = log10Pow2(e2)
+            Dim q As UInteger = Log10Pow2(e2)
             e10 = CInt(q)
-            Dim k As Integer = FLOAT_POW5_INV_BITCOUNT + pow5bits(CInt(q)) - 1
+            Dim k As Integer = FLOAT_POW5_INV_BITCOUNT + Pow5bits(CInt(q)) - 1
             Dim i As Integer = -e2 + CInt(q) + k
-            vr = mulPow5InvDivPow2(mv, q, i)
-            vp = mulPow5InvDivPow2(mp, q, i)
-            vm = mulPow5InvDivPow2(mm, q, i)
+            vr = MulPow5InvDivPow2(mv, q, i)
+            vp = MulPow5InvDivPow2(mp, q, i)
+            vm = MulPow5InvDivPow2(mm, q, i)
 #If RYU_DEBUG Then
 			printf("%u * 2^%d / 10^%u" & vbLf, mv, e2, q)
 			printf("V+=%u" & vbLf & "V =%u" & vbLf & "V-=%u" & vbLf, vp, vr, vm)
@@ -166,37 +168,37 @@ Module SingleToString
                 ' We need to know one removed digit even if we are not going to loop below. We could use
                 ' q = X - 1 above, except that would require 33 bits for the result, and we've found that
                 ' 32-bit arithmetic is faster even on 64-bit machines.
-                Dim l As Integer = FLOAT_POW5_INV_BITCOUNT + pow5bits(CInt(q - 1UI)) - 1I
-                lastRemovedDigit = CByte(mulPow5InvDivPow2(mv, q - 1UI, -e2 + CInt(q) - 1I + l) Mod 10UI)
+                Dim l As Integer = FLOAT_POW5_INV_BITCOUNT + Pow5bits(CInt(q - 1UI)) - 1I
+                lastRemovedDigit = CByte(MulPow5InvDivPow2(mv, q - 1UI, -e2 + CInt(q) - 1I + l) Mod 10UI)
             End If
             If q <= 9 Then
                 ' The largest power of 5 that fits in 24 bits is 5^10, but q <= 9 seems to be safe as well.
                 ' Only one of mp, mv, and mm can be a multiple of 5, if any.
                 If mv Mod 5 = 0 Then
-                    vrIsTrailingZeros = multipleOfPowerOf5(mv, q)
+                    vrIsTrailingZeros = MultipleOfPowerOf5(mv, q)
                 ElseIf acceptBounds Then
-                    vmIsTrailingZeros = multipleOfPowerOf5(mm, q)
+                    vmIsTrailingZeros = MultipleOfPowerOf5(mm, q)
                 Else
-                    vp -= BooleanToUInt32(multipleOfPowerOf5(mp, q))
+                    vp -= BooleanToUInt32(MultipleOfPowerOf5(mp, q))
                 End If
             End If
         Else
-            Dim q As UInteger = log10Pow5(-e2)
+            Dim q As UInteger = Log10Pow5(-e2)
             e10 = CInt(q) + e2
             Dim i As Integer = -e2 - CInt(q)
-            Dim k As Integer = pow5bits(i) - FLOAT_POW5_BITCOUNT
+            Dim k As Integer = Pow5bits(i) - FLOAT_POW5_BITCOUNT
             Dim j As Integer = CInt(q) - k
-            vr = mulPow5divPow2(mv, CUInt(i), j)
-            vp = mulPow5divPow2(mp, CUInt(i), j)
-            vm = mulPow5divPow2(mm, CUInt(i), j)
+            vr = MulPow5divPow2(mv, CUInt(i), j)
+            vp = MulPow5divPow2(mp, CUInt(i), j)
+            vm = MulPow5divPow2(mm, CUInt(i), j)
 #If RYU_DEBUG Then
 			printf("%u * 5^%d / 10^%u" & vbLf, mv, -e2, q)
 			printf("%u %d %d %d" & vbLf, q, i, k, j)
 			printf("V+=%u" & vbLf & "V =%u" & vbLf & "V-=%u" & vbLf, vp, vr, vm)
 #End If
             If q <> 0UI AndAlso (vp - 1UI) \ 10UI <= vm \ 10UI Then
-                j = CInt(q) - 1I - (pow5bits(i + 1I) - FLOAT_POW5_BITCOUNT)
-                lastRemovedDigit = CByte(mulPow5divPow2(mv, CUInt(i + 1), j) Mod 10)
+                j = CInt(q) - 1I - (Pow5bits(i + 1I) - FLOAT_POW5_BITCOUNT)
+                lastRemovedDigit = CByte(MulPow5divPow2(mv, CUInt(i + 1), j) Mod 10)
             End If
             If q <= 1 Then
                 ' {vr,vp,vm} is trailing zeros if {mv,mp,mm} has at least q trailing 0 bits.
@@ -210,7 +212,7 @@ Module SingleToString
                     vp -= 1UI
                 End If
             ElseIf q < 31 Then ' TODO(ulfjack): Use a tighter bound here.
-                vrIsTrailingZeros = multipleOfPowerOf2(mv, CInt(q) - 1I)
+                vrIsTrailingZeros = MultipleOfPowerOf2(mv, CInt(q) - 1I)
 #If RYU_DEBUG Then
 				printf("vr is trailing zeros=%s" & vbLf,If(vrIsTrailingZeros, "true", "false"))
 #End If
@@ -287,15 +289,15 @@ Module SingleToString
 		printf("EXP=%d" & vbLf, exp)
 #End If
 
-        Dim fd As floating_decimal_32
-        fd.exponent = exp
-        fd.mantissa = output
+        Dim fd As FloatingDecimal32
+        fd.Exponent = exp
+        fd.Mantissa = output
         Return fd
     End Function
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function to_sbytes(v As floating_decimal_32, sign As Boolean, result As Span(Of SByte)) As Integer
+    Private Function To_sbytes(v As FloatingDecimal32, sign As Boolean, result As Span(Of SByte)) As Integer
         ' Step 5: Print the decimal representation.
         Dim index As Integer = 0
         If sign Then
@@ -305,8 +307,8 @@ Module SingleToString
             index += 1
         End If
 
-        Dim output As UInteger = v.mantissa
-        Dim olength As Integer = decimalLength(output)
+        Dim output As UInteger = v.Mantissa
+        Dim olength As Integer = DecimalLength(output)
 
 #If RYU_DEBUG Then
 		printf("DIGITS=%u" & vbLf, v.mantissa)
@@ -356,7 +358,7 @@ Module SingleToString
         End If
 
         ' Print the exponent.
-        Dim exp As Integer = v.exponent + CInt(olength) - 1
+        Dim exp As Integer = v.Exponent + CInt(olength) - 1
 
         'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
         'ORIGINAL LINE: result[index++] = (sbyte)"E"c;
@@ -384,7 +386,7 @@ Module SingleToString
     End Function
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Private Function f2s_buffered_n(f As Single, result As Span(Of SByte)) As Integer
+    Private Function F2s_buffered_n(f As Single, result As Span(Of SByte)) As Integer
         ' Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
         Dim bits As UInteger = CUInt(BitConverter.SingleToInt32Bits(f))
 
@@ -403,11 +405,11 @@ Module SingleToString
 
         ' Case distinction; exit early for the easy cases.
         If ieeeExponent = ((1UI << FLOAT_EXPONENT_BITS) - 1UI) OrElse (ieeeExponent = 0 AndAlso ieeeMantissa = 0) Then
-            Return copy_special_str(result, ieeeSign, ieeeExponent <> 0UI, ieeeMantissa <> 0UI)
+            Return CopySpecialString(result, ieeeSign, ieeeExponent <> 0UI, ieeeMantissa <> 0UI)
         End If
 
-        Dim v As floating_decimal_32 = f2d(ieeeMantissa, ieeeExponent)
-        Return to_sbytes(v, ieeeSign, result)
+        Dim v As FloatingDecimal32 = CreateFloatingDecimal32(ieeeMantissa, ieeeExponent)
+        Return To_sbytes(v, ieeeSign, result)
     End Function
 
     <StructLayout(LayoutKind.Sequential, Size:=26)>
@@ -420,7 +422,7 @@ Module SingleToString
         'INSTANT VB TODO TASK: There is no equivalent to 'stackalloc' in VB:
         Dim allocated As StackAllocSByte26
         Dim result As Span(Of SByte) = MemoryMarshal.CreateSpan(allocated.FirstValue, 26)
-        Dim index As Integer = f2s_buffered_n(f, result)
+        Dim index As Integer = F2s_buffered_n(f, result)
 
         ' Terminate the string.
         result(index) = Nothing

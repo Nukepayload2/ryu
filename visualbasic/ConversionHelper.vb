@@ -1,9 +1,4 @@
-﻿Imports System
-Imports System.Collections.Generic
-Imports System.Runtime.InteropServices
-Imports System.Text
-
-Module ConversionHelper
+﻿Module ConversionHelper
     Function BooleanToInt32(value As Boolean) As Integer
         Return If(value, 1, 0)
     End Function

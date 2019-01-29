@@ -1,11 +1,9 @@
-﻿Imports System
-Imports System.Runtime.CompilerServices
+﻿Imports System.Runtime.CompilerServices
 Imports System.Runtime.InteropServices
-Imports System.Text
 
 Module DoubleToString ' D2s
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function pow5Factor(value As ULong) As UInteger
+    Private Function Pow5Factor(value As ULong) As UInteger
         Dim count As UInteger = 0
         Do
             Dim q As ULong = div5(value)
@@ -21,14 +19,14 @@ Module DoubleToString ' D2s
 
     ' Returns true if value is divisible by 5^p.
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function multipleOfPowerOf5(value As ULong, p As UInteger) As Boolean
+    Private Function MultipleOfPowerOf5(value As ULong, p As UInteger) As Boolean
         ' I tried a case distinction on p, but there was no performance difference.
-        Return pow5Factor(value) >= p
+        Return Pow5Factor(value) >= p
     End Function
 
     ' Returns true if value is divisible by 2^p.
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function multipleOfPowerOf2(value As ULong, p As Integer) As Boolean
+    Private Function MultipleOfPowerOf2(value As ULong, p As Integer) As Boolean
         ' return __builtin_ctzll(value) >= p;
         Return (value And ((1UL << p) - 1UL)) = 0UL
     End Function
@@ -121,7 +119,7 @@ End Function
 #Else
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function mulShiftAll(m As ULong, mul() As ULong, j As Integer, ByRef vp As ULong, ByRef vm As ULong, mmShift As UInteger) As ULong
+    Private Function MulShiftAll(m As ULong, mul() As ULong, j As Integer, ByRef vp As ULong, ByRef vm As ULong, mmShift As UInteger) As ULong
         m <<= 1
         ' m is maximum 55 bits
         Dim tmp As ULong = Nothing
@@ -156,70 +154,78 @@ End Function
 #End If ' HAS_64_BIT_INTRINSICS
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function decimalLength(v As ULong) As Integer
+    Private Function DecimalLength(v As ULong) As Integer
         ' This is slightly faster than a loop.
         ' The average output length is 16.38 digits, so we check high-to-low.
         ' Function precondition: v is not an 18, 19, or 20-digit number.
         ' (17 digits are sufficient for round-tripping.)
-        If v >= 10000000000000000UL Then
-            Return 17
-        End If
-        If v >= 1000000000000000UL Then
-            Return 16
-        End If
-        If v >= 100000000000000UL Then
-            Return 15
-        End If
-        If v >= 10000000000000UL Then
-            Return 14
-        End If
-        If v >= 1000000000000UL Then
-            Return 13
-        End If
-        If v >= 100000000000UL Then
-            Return 12
-        End If
-        If v >= 10000000000UL Then
-            Return 11
-        End If
-        If v >= 1000000000UL Then
-            Return 10
-        End If
+
         If v >= 100000000UL Then
-            Return 9
+            If v >= 10000000000000UL Then
+                If v >= 1000000000000000UL Then
+                    If v >= 10000000000000000UL Then
+                        Return 17
+                    End If
+                    Return 16
+                Else
+                    If v >= 100000000000000UL Then
+                        Return 15
+                    End If
+                    Return 14
+                End If
+            Else
+                If v >= 10000000000UL Then
+                    If v >= 1000000000000UL Then
+                        Return 13
+                    End If
+                    If v >= 100000000000UL Then
+                        Return 12
+                    End If
+                    Return 11
+                Else
+                    If v >= 1000000000UL Then
+                        Return 10
+                    End If
+                    Return 9
+                End If
+            End If
+        Else
+            If v >= 10000UL Then
+                If v >= 1000000UL Then
+                    If v >= 10000000UL Then
+                        Return 8
+                    End If
+                    Return 7
+                Else
+                    If v >= 100000UL Then
+                        Return 6
+                    End If
+                    Return 5
+                End If
+            Else
+                If v >= 100UL Then
+                    If v >= 1000UL Then
+                        Return 4
+                    End If
+                    Return 3
+                Else
+                    If v >= 10UL Then
+                        Return 2
+                    End If
+                    Return 1
+                End If
+            End If
         End If
-        If v >= 10000000UL Then
-            Return 8
-        End If
-        If v >= 1000000UL Then
-            Return 7
-        End If
-        If v >= 100000UL Then
-            Return 6
-        End If
-        If v >= 10000UL Then
-            Return 5
-        End If
-        If v >= 1000UL Then
-            Return 4
-        End If
-        If v >= 100UL Then
-            Return 3
-        End If
-        If v >= 10UL Then
-            Return 2
-        End If
-        Return 1
     End Function
 
     ' A floating decimal representing m * 10^e.
-    Private Structure floating_decimal_64
-        Public mantissa As ULong
-        Public exponent As Integer
+    Private Structure FloatingDecimal64
+        Public Mantissa As ULong
+        Public Exponent As Integer
     End Structure
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function d2d(ieeeMantissa As ULong, ieeeExponent As UInteger) As floating_decimal_64
+    Private Function CreateFloatingDecimal64(ieeeMantissa As ULong, ieeeExponent As UInteger) As FloatingDecimal64
         Dim e2 As Integer
         Dim m2 As ULong
         If ieeeExponent = 0UI Then
@@ -253,16 +259,16 @@ End Function
         If e2 >= 0 Then
             ' I tried special-casing q == 0, but there was no effect on performance.
             ' This expression is slightly faster than max(0, log10Pow2(e2) - 1).
-            Dim q As UInteger = log10Pow2(e2) - BooleanToUInt32(e2 > 3)
+            Dim q As UInteger = Log10Pow2(e2) - BooleanToUInt32(e2 > 3)
             e10 = CInt(q)
-            Dim k As Integer = CInt(DOUBLE_POW5_INV_BITCOUNT + pow5bits(CInt(q)) - 1UI)
+            Dim k As Integer = CInt(DOUBLE_POW5_INV_BITCOUNT + Pow5bits(CInt(q)) - 1UI)
             Dim i As Integer = -e2 + CInt(q) + k
 #If RYU_OPTIMIZE_SIZE Then
 	ULong pow5(2)
 	double_computeInvPow5(q, pow5)
 	vr = mulShiftAll(m2, pow5, i, &vp, &vm, mmShift)
 #Else
-            vr = mulShiftAll(m2, DOUBLE_POW5_INV_SPLIT(CInt(q)), i, vp, vm, mmShift)
+            vr = MulShiftAll(m2, DOUBLE_POW5_INV_SPLIT(CInt(q)), i, vp, vm, mmShift)
 #End If
 #If RYU_DEBUG Then
 				printf("%" PRIu64 " * 2^%d / 10^%u" & vbLf, mv, e2, q)
@@ -274,30 +280,30 @@ End Function
                 ' Only one of mp, mv, and mm can be a multiple of 5, if any.
                 Dim mvMod5 As UInteger = CUInt(mv - 5UL * div5(mv))
                 If mvMod5 = 0UI Then
-                    vrIsTrailingZeros = multipleOfPowerOf5(mv, q)
+                    vrIsTrailingZeros = MultipleOfPowerOf5(mv, q)
                 ElseIf acceptBounds Then
                     ' Same as min(e2 + (~mm & 1), pow5Factor(mm)) >= q
                     ' <=> e2 + (~mm & 1) >= q && pow5Factor(mm) >= q
                     ' <=> true && pow5Factor(mm) >= q, since e2 >= q.
-                    vmIsTrailingZeros = multipleOfPowerOf5(mv - 1UL - mmShift, q)
+                    vmIsTrailingZeros = MultipleOfPowerOf5(mv - 1UL - mmShift, q)
                 Else
                     ' Same as min(e2 + 1, pow5Factor(mp)) >= q.
-                    vp -= BooleanToUInt64(multipleOfPowerOf5(mv + 2UL, q))
+                    vp -= BooleanToUInt64(MultipleOfPowerOf5(mv + 2UL, q))
                 End If
             End If
         Else
             ' This expression is slightly faster than max(0, log10Pow5(-e2) - 1).
-            Dim q As UInteger = log10Pow5(-e2) - BooleanToUInt32(-e2 > 1I)
+            Dim q As UInteger = Log10Pow5(-e2) - BooleanToUInt32(-e2 > 1I)
             e10 = CInt(q) + e2
             Dim i As Integer = -e2 - CInt(q)
-            Dim k As Integer = pow5bits(i) - DOUBLE_POW5_BITCOUNT
+            Dim k As Integer = Pow5bits(i) - DOUBLE_POW5_BITCOUNT
             Dim j As Integer = CInt(q) - k
 #If RYU_OPTIMIZE_SIZE Then
 	ULong pow5(2)
 	double_computePow5(i, pow5)
 	vr = mulShiftAll(m2, pow5, j, &vp, &vm, mmShift)
 #Else
-            vr = mulShiftAll(m2, DOUBLE_POW5_SPLIT(i), j, vp, vm, mmShift)
+            vr = MulShiftAll(m2, DOUBLE_POW5_SPLIT(i), j, vp, vm, mmShift)
 #End If
 #If RYU_DEBUG Then
 				printf("%" PRIu64 " * 5^%d / 10^%u" & vbLf, mv, -e2, q)
@@ -321,7 +327,7 @@ End Function
                 ' <=> ntz(mv) >= q - 1 (e2 is negative and -e2 >= q)
                 ' <=> (mv & ((1 << (q - 1)) - 1)) == 0
                 ' We also need to make sure that the left shift does not overflow.
-                vrIsTrailingZeros = multipleOfPowerOf2(mv, CInt(q) - 1)
+                vrIsTrailingZeros = MultipleOfPowerOf2(mv, CInt(q) - 1)
 #If RYU_DEBUG Then
 					printf("vr is trailing zeros=%s" & vbLf,If(vrIsTrailingZeros, "true", "false"))
 #End If
@@ -437,15 +443,15 @@ End Function
 			printf("EXP=%d" & vbLf, exp)
 #End If
 
-        Dim fd As floating_decimal_64
-        fd.exponent = exp
-        fd.mantissa = output
+        Dim fd As FloatingDecimal64
+        fd.Exponent = exp
+        fd.Mantissa = output
         Return fd
     End Function
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function to_sbytes(v As floating_decimal_64, sign As Boolean, result As Span(Of SByte)) As Integer
+    Private Function WriteToSBytes(v As FloatingDecimal64, sign As Boolean, result As Span(Of SByte)) As Integer
         ' Step 5: Print the decimal representation.
         Dim index As Integer = 0
         If sign Then
@@ -455,8 +461,8 @@ End Function
             index += 1I
         End If
 
-        Dim output As ULong = v.mantissa
-        Dim olength As Integer = decimalLength(output)
+        Dim output As ULong = v.Mantissa
+        Dim olength As Integer = DecimalLength(output)
 
 #If RYU_DEBUG Then
 			printf("DIGITS=%" PRIu64 vbLf, v.mantissa)
@@ -531,7 +537,7 @@ End Function
         End If
 
         ' Print the exponent.
-        Dim exp As Integer = v.exponent + olength - 1
+        Dim exp As Integer = v.Exponent + olength - 1
 
         'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
         'ORIGINAL LINE: result[index++] = (sbyte)"E"c;
@@ -564,7 +570,7 @@ End Function
     End Function
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Private Function d2s_buffered_n(f As Double, result As Span(Of SByte)) As Integer
+    Private Function DoubleToSByteBuffer(f As Double, result As Span(Of SByte)) As Integer
         ' Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
         Dim bits As ULong = CULng(BitConverter.DoubleToInt64Bits(f))
 
@@ -582,11 +588,11 @@ End Function
         Dim ieeeExponent As UInteger = CUInt((bits >> DOUBLE_MANTISSA_BITS) And ((1UI << DOUBLE_EXPONENT_BITS) - 1UI))
         ' Case distinction; exit early for the easy cases.
         If ieeeExponent = ((1UI << DOUBLE_EXPONENT_BITS) - 1UI) OrElse (ieeeExponent = 0UI AndAlso ieeeMantissa = 0UL) Then
-            Return copy_special_str(result, ieeeSign, ieeeExponent <> 0UI, ieeeMantissa <> 0UL)
+            Return CopySpecialString(result, ieeeSign, ieeeExponent <> 0UI, ieeeMantissa <> 0UL)
         End If
 
-        Dim v As floating_decimal_64 = d2d(ieeeMantissa, ieeeExponent)
-        Return to_sbytes(v, ieeeSign, result)
+        Dim v As FloatingDecimal64 = CreateFloatingDecimal64(ieeeMantissa, ieeeExponent)
+        Return WriteToSBytes(v, ieeeSign, result)
     End Function
 
     <StructLayout(LayoutKind.Sequential, Size:=26)>
@@ -599,7 +605,7 @@ End Function
         'INSTANT VB TODO TASK: There is no equivalent to 'stackalloc' in VB:
         Dim allocated As StackAllocSByte26
         Dim result As Span(Of SByte) = MemoryMarshal.CreateSpan(allocated.FirstValue, 26)
-        Dim index As Integer = d2s_buffered_n(f, result)
+        Dim index As Integer = DoubleToSByteBuffer(f, result)
 
         ' Terminate the string.
         result(index) = Nothing

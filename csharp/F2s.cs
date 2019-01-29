@@ -114,19 +114,39 @@ namespace Ryu
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static int decimalLength(uint v)
+        static int DecimalLength(uint v)
         {
             // Function precondition: v is not a 10-digit number.
             // (9 digits are sufficient for round-tripping.)
-            if (v >= 100000000) { return 9; }
-            if (v >= 10000000) { return 8; }
-            if (v >= 1000000) { return 7; }
-            if (v >= 100000) { return 6; }
-            if (v >= 10000) { return 5; }
-            if (v >= 1000) { return 4; }
-            if (v >= 100) { return 3; }
-            if (v >= 10) { return 2; }
-            return 1;
+            if (v >= 10000U)
+            {
+                if (v >= 1000000U)
+                {
+                    if (v >= 100000000U)
+                        return 9;
+                    if (v >= 10000000U)
+                        return 8;
+                    return 7;
+                }
+                else
+                {
+                    if (v >= 100000U)
+                        return 6;
+                    return 5;
+                }
+            }
+            else if (v >= 100U)
+            {
+                if (v >= 1000U)
+                    return 4;
+                return 3;
+            }
+            else
+            {
+                if (v >= 10U)
+                    return 2;
+                return 1;
+            }
         }
 
         // A floating decimal representing m * 10^e.
