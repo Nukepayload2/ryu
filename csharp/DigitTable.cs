@@ -4,17 +4,17 @@
     {
         // A table of all two-digit numbers. This is used to speed up decimal digit
         // generation by copying pairs of digits into the final output.
-        static readonly byte[] DIGIT_TABLE = {
-          (byte)'0',(byte)'0',(byte)'0',(byte)'1',(byte)'0',(byte)'2',(byte)'0',(byte)'3',(byte)'0',(byte)'4',(byte)'0',(byte)'5',(byte)'0',(byte)'6',(byte)'0',(byte)'7',(byte)'0',(byte)'8',(byte)'0',(byte)'9',
-          (byte)'1',(byte)'0',(byte)'1',(byte)'1',(byte)'1',(byte)'2',(byte)'1',(byte)'3',(byte)'1',(byte)'4',(byte)'1',(byte)'5',(byte)'1',(byte)'6',(byte)'1',(byte)'7',(byte)'1',(byte)'8',(byte)'1',(byte)'9',
-          (byte)'2',(byte)'0',(byte)'2',(byte)'1',(byte)'2',(byte)'2',(byte)'2',(byte)'3',(byte)'2',(byte)'4',(byte)'2',(byte)'5',(byte)'2',(byte)'6',(byte)'2',(byte)'7',(byte)'2',(byte)'8',(byte)'2',(byte)'9',
-          (byte)'3',(byte)'0',(byte)'3',(byte)'1',(byte)'3',(byte)'2',(byte)'3',(byte)'3',(byte)'3',(byte)'4',(byte)'3',(byte)'5',(byte)'3',(byte)'6',(byte)'3',(byte)'7',(byte)'3',(byte)'8',(byte)'3',(byte)'9',
-          (byte)'4',(byte)'0',(byte)'4',(byte)'1',(byte)'4',(byte)'2',(byte)'4',(byte)'3',(byte)'4',(byte)'4',(byte)'4',(byte)'5',(byte)'4',(byte)'6',(byte)'4',(byte)'7',(byte)'4',(byte)'8',(byte)'4',(byte)'9',
-          (byte)'5',(byte)'0',(byte)'5',(byte)'1',(byte)'5',(byte)'2',(byte)'5',(byte)'3',(byte)'5',(byte)'4',(byte)'5',(byte)'5',(byte)'5',(byte)'6',(byte)'5',(byte)'7',(byte)'5',(byte)'8',(byte)'5',(byte)'9',
-          (byte)'6',(byte)'0',(byte)'6',(byte)'1',(byte)'6',(byte)'2',(byte)'6',(byte)'3',(byte)'6',(byte)'4',(byte)'6',(byte)'5',(byte)'6',(byte)'6',(byte)'6',(byte)'7',(byte)'6',(byte)'8',(byte)'6',(byte)'9',
-          (byte)'7',(byte)'0',(byte)'7',(byte)'1',(byte)'7',(byte)'2',(byte)'7',(byte)'3',(byte)'7',(byte)'4',(byte)'7',(byte)'5',(byte)'7',(byte)'6',(byte)'7',(byte)'7',(byte)'7',(byte)'8',(byte)'7',(byte)'9',
-          (byte)'8',(byte)'0',(byte)'8',(byte)'1',(byte)'8',(byte)'2',(byte)'8',(byte)'3',(byte)'8',(byte)'4',(byte)'8',(byte)'5',(byte)'8',(byte)'6',(byte)'8',(byte)'7',(byte)'8',(byte)'8',(byte)'8',(byte)'9',
-          (byte)'9',(byte)'0',(byte)'9',(byte)'1',(byte)'9',(byte)'2',(byte)'9',(byte)'3',(byte)'9',(byte)'4',(byte)'9',(byte)'5',(byte)'9',(byte)'6',(byte)'9',(byte)'7',(byte)'9',(byte)'8',(byte)'9',(byte)'9'
+        static readonly sbyte[] DIGIT_TABLE = {
+          (sbyte)'0',(sbyte)'0',(sbyte)'0',(sbyte)'1',(sbyte)'0',(sbyte)'2',(sbyte)'0',(sbyte)'3',(sbyte)'0',(sbyte)'4',(sbyte)'0',(sbyte)'5',(sbyte)'0',(sbyte)'6',(sbyte)'0',(sbyte)'7',(sbyte)'0',(sbyte)'8',(sbyte)'0',(sbyte)'9',
+          (sbyte)'1',(sbyte)'0',(sbyte)'1',(sbyte)'1',(sbyte)'1',(sbyte)'2',(sbyte)'1',(sbyte)'3',(sbyte)'1',(sbyte)'4',(sbyte)'1',(sbyte)'5',(sbyte)'1',(sbyte)'6',(sbyte)'1',(sbyte)'7',(sbyte)'1',(sbyte)'8',(sbyte)'1',(sbyte)'9',
+          (sbyte)'2',(sbyte)'0',(sbyte)'2',(sbyte)'1',(sbyte)'2',(sbyte)'2',(sbyte)'2',(sbyte)'3',(sbyte)'2',(sbyte)'4',(sbyte)'2',(sbyte)'5',(sbyte)'2',(sbyte)'6',(sbyte)'2',(sbyte)'7',(sbyte)'2',(sbyte)'8',(sbyte)'2',(sbyte)'9',
+          (sbyte)'3',(sbyte)'0',(sbyte)'3',(sbyte)'1',(sbyte)'3',(sbyte)'2',(sbyte)'3',(sbyte)'3',(sbyte)'3',(sbyte)'4',(sbyte)'3',(sbyte)'5',(sbyte)'3',(sbyte)'6',(sbyte)'3',(sbyte)'7',(sbyte)'3',(sbyte)'8',(sbyte)'3',(sbyte)'9',
+          (sbyte)'4',(sbyte)'0',(sbyte)'4',(sbyte)'1',(sbyte)'4',(sbyte)'2',(sbyte)'4',(sbyte)'3',(sbyte)'4',(sbyte)'4',(sbyte)'4',(sbyte)'5',(sbyte)'4',(sbyte)'6',(sbyte)'4',(sbyte)'7',(sbyte)'4',(sbyte)'8',(sbyte)'4',(sbyte)'9',
+          (sbyte)'5',(sbyte)'0',(sbyte)'5',(sbyte)'1',(sbyte)'5',(sbyte)'2',(sbyte)'5',(sbyte)'3',(sbyte)'5',(sbyte)'4',(sbyte)'5',(sbyte)'5',(sbyte)'5',(sbyte)'6',(sbyte)'5',(sbyte)'7',(sbyte)'5',(sbyte)'8',(sbyte)'5',(sbyte)'9',
+          (sbyte)'6',(sbyte)'0',(sbyte)'6',(sbyte)'1',(sbyte)'6',(sbyte)'2',(sbyte)'6',(sbyte)'3',(sbyte)'6',(sbyte)'4',(sbyte)'6',(sbyte)'5',(sbyte)'6',(sbyte)'6',(sbyte)'6',(sbyte)'7',(sbyte)'6',(sbyte)'8',(sbyte)'6',(sbyte)'9',
+          (sbyte)'7',(sbyte)'0',(sbyte)'7',(sbyte)'1',(sbyte)'7',(sbyte)'2',(sbyte)'7',(sbyte)'3',(sbyte)'7',(sbyte)'4',(sbyte)'7',(sbyte)'5',(sbyte)'7',(sbyte)'6',(sbyte)'7',(sbyte)'7',(sbyte)'7',(sbyte)'8',(sbyte)'7',(sbyte)'9',
+          (sbyte)'8',(sbyte)'0',(sbyte)'8',(sbyte)'1',(sbyte)'8',(sbyte)'2',(sbyte)'8',(sbyte)'3',(sbyte)'8',(sbyte)'4',(sbyte)'8',(sbyte)'5',(sbyte)'8',(sbyte)'6',(sbyte)'8',(sbyte)'7',(sbyte)'8',(sbyte)'8',(sbyte)'8',(sbyte)'9',
+          (sbyte)'9',(sbyte)'0',(sbyte)'9',(sbyte)'1',(sbyte)'9',(sbyte)'2',(sbyte)'9',(sbyte)'3',(sbyte)'9',(sbyte)'4',(sbyte)'9',(sbyte)'5',(sbyte)'9',(sbyte)'6',(sbyte)'9',(sbyte)'7',(sbyte)'9',(sbyte)'8',(sbyte)'9',(sbyte)'9'
         };
     }
 }

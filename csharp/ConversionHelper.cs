@@ -7,40 +7,29 @@ namespace Ryu
 {
     partial class Global //ConversionHelper
     {
-        static unsafe int BooleanToInt32(bool value)
+        static int BooleanToInt32(bool value)
         {
-            bool* pBool = &value;
-            int* pInt32 = (int*)(void*)pBool;
-            return *pInt32;
+            return value ? 1 : 0;
         }
 
-        static unsafe uint BooleanToUInt32(bool value)
+        static uint BooleanToUInt32(bool value)
         {
-            bool* pBool = &value;
-            uint* pInt32 = (uint*)(void*)pBool;
-            return *pInt32;
+            return value ? 1u : 0u;
         }
 
-        static unsafe ulong BooleanToUInt64(bool value)
+        static ulong BooleanToUInt64(bool value)
         {
-            bool* pBool = &value;
-            uint* pInt32 = (uint*)(void*)pBool;
-            return *pInt32;
+            return value ? 1ul : 0ul;
         }
 
-        static unsafe void memcpy(void* dest, void* src, int len)
+        static void memcpy(Span<sbyte> dest, sbyte[] src, uint srcOffset, int len)
         {
-            Buffer.MemoryCopy(src, dest, len, len);
+            src.AsSpan().Slice((int)srcOffset, len).CopyTo(dest);
         }
 
-        static unsafe void memcpy(void* dest, byte[] src, uint srcOffset, int len)
+        static void memcpy(Span<sbyte> dest, sbyte[] src, int srcOffset, int len)
         {
-            Marshal.Copy(src, (int)srcOffset, new IntPtr(dest), len);
-        }
-
-        static unsafe void memcpy(void* dest, byte[] src, int srcOffset, int len)
-        {
-            Marshal.Copy(src, srcOffset, new IntPtr(dest), len);
+            src.AsSpan().Slice(srcOffset, len).CopyTo(dest);
         }
     }
 }

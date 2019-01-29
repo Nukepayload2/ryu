@@ -1,4 +1,7 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Ryu
 {
@@ -31,7 +34,7 @@ namespace Ryu
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe static int copy_special_str(sbyte* result, bool sign, bool exponent, bool mantissa)
+        static int copy_special_str(Span<sbyte> result, bool sign, bool exponent, bool mantissa)
         {
             if (mantissa)
             {
@@ -66,19 +69,26 @@ namespace Ryu
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe uint float_to_bits(float f)
-        {
-            float* pf = &f;
-            uint* pui = (uint*)(void*)pf;
-            return *pui;
-        }
+        [ThreadStatic]
+        private static StringBuilder t_NumberFormatterSharedStringBuilder;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static ulong double_to_bits(double d)
+        private static string CopyAsciiSpanToNewString(Span<sbyte> result, int strLen)
         {
-            return (ulong)System.BitConverter.DoubleToInt64Bits(d);
+            if (t_NumberFormatterSharedStringBuilder == null)
+            {
+                t_NumberFormatterSharedStringBuilder = new StringBuilder();
+            }
+            else
+            {
+                t_NumberFormatterSharedStringBuilder.Clear();
+            }
+            var sb = t_NumberFormatterSharedStringBuilder;
+            for (int i = 0; i < strLen; i++)
+            {
+                var ch = result[i];
+                sb.Append((char)ch);
+            }
+            return sb.ToString();
         }
-
     }
 }

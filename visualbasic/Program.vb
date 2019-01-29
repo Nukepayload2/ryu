@@ -1,12 +1,19 @@
-Module Program
-    Sub Main(args As String())
-        ' Converted from Java version.
-        ' This sample is not ready for performance tests, because it uses BigInteger, which is slow.
-        ' BigInteger is preserved for better readability.
-        ' If you need better performance, see the CSharp version. 
-        Dim f As Single = 0.330078125F
-        Dim result As String = RyuFloat.floatToString(f, RoundingMode.ROUND_EVEN)
-        Console.WriteLine(result & " " & f)
-    End Sub
+﻿Module Program
 
+    <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
+    Sub Main(args() As String)
+        ' Converted from c version.
+
+        Dim testValue = Math.PI
+        Dim ryuResult = ConvertDoubleToString(testValue)
+        Dim expected = testValue.ToString()
+        Console.WriteLine($"Ryu CStr(Double) {ryuResult}")
+        Console.WriteLine($"Expected(Double) {expected}")
+
+        Dim testValueF = MathF.PI
+        Dim ryuResultF = ConvertSingleToString(testValueF)
+        Dim expectedF = testValueF.ToString()
+        Console.WriteLine($"Ryu CStr(Single) {ryuResultF}")
+        Console.WriteLine($"Expected(Single) {expectedF}")
+    End Sub
 End Module

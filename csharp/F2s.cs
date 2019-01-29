@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace Ryu
 {
@@ -113,7 +114,7 @@ namespace Ryu
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static uint decimalLength(uint v)
+        static int decimalLength(uint v)
         {
             // Function precondition: v is not a 10-digit number.
             // (9 digits are sufficient for round-tripping.)
@@ -340,7 +341,7 @@ namespace Ryu
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe int to_sbytes(floating_decimal_32 v, bool sign, sbyte* result)
+        static int to_sbytes(floating_decimal_32 v, bool sign, Span<sbyte> result)
         {
             // Step 5: Print the decimal representation.
             int index = 0;
@@ -350,7 +351,7 @@ namespace Ryu
             }
 
             uint output = v.mantissa;
-            uint olength = decimalLength(output);
+            int olength = decimalLength(output);
 
 #if RYU_DEBUG
         printf("DIGITS=%u\n", v.mantissa);
@@ -365,7 +366,7 @@ namespace Ryu
             //   result[index + olength - i] = (sbyte) ('0' + c);
             // }
             // result[index] = '0' + output % 10;
-            uint i = 0;
+            int i = 0;
             while (output >= 10000)
             {
                 uint c = output % 10000;
@@ -373,15 +374,15 @@ namespace Ryu
                 output /= 10000;
                 uint c0 = (c % 100) << 1;
                 uint c1 = (c / 100) << 1;
-                memcpy(result + index + olength - i - 1, DIGIT_TABLE, c0, 2);
-                memcpy(result + index + olength - i - 3, DIGIT_TABLE, c1, 2);
+                memcpy(result.Slice(index + olength - i - 1), DIGIT_TABLE, c0, 2);
+                memcpy(result.Slice(index + olength - i - 3), DIGIT_TABLE, c1, 2);
                 i += 4;
             }
             if (output >= 100)
             {
                 uint c = (output % 100) << 1;
                 output /= 100;
-                memcpy(result + index + olength - i - 1, DIGIT_TABLE, c, 2);
+                memcpy(result.Slice(index + olength - i - 1), DIGIT_TABLE, c, 2);
                 i += 2;
             }
             if (output >= 10)
@@ -408,8 +409,13 @@ namespace Ryu
             }
 
             // Print the exponent.
-            result[index++] = (sbyte)'E';
             int exp = v.exponent + (int)olength - 1;
+            if (exp >= -3 && exp < 7)
+            {
+                return index;
+            }
+
+            result[index++] = (sbyte)'E';
             if (exp < 0)
             {
                 result[index++] = (sbyte)'-';
@@ -418,7 +424,7 @@ namespace Ryu
 
             if (exp >= 10)
             {
-                memcpy(result + index, DIGIT_TABLE, 2 * exp, 2);
+                memcpy(result.Slice(index), DIGIT_TABLE, 2 * exp, 2);
                 index += 2;
             }
             else
@@ -429,10 +435,10 @@ namespace Ryu
             return index;
         }
 
-        unsafe int f2s_buffered_n(float f, sbyte* result)
+        static int f2s_buffered_n(float f, Span<sbyte> result)
         {
             // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-            uint bits = float_to_bits(f);
+            uint bits = (uint)BitConverter.SingleToInt32Bits(f);
 
 #if RYU_DEBUG
         printf("IN=");
@@ -458,12 +464,15 @@ namespace Ryu
             return to_sbytes(v, ieeeSign, result);
         }
 
-        public unsafe void f2s_buffered(float f, sbyte* result)
+        public static string SingleToString(float f)
         {
+            Span<sbyte> result = stackalloc sbyte[26];
             int index = f2s_buffered_n(f, result);
 
             // Terminate the string.
             result[index] = default;
+
+            return CopyAsciiSpanToNewString(result, index);
         }
     }
 }

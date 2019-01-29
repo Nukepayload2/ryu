@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Ryu
 {
@@ -128,28 +130,28 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
 #else
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe ulong mulShiftAll(ulong m, ulong[] mul, int j,
-      ulong* vp, ulong* vm, uint mmShift)
+        static ulong mulShiftAll(ulong m, ulong[] mul, int j,
+            out ulong vp, out ulong vm, uint mmShift)
         {
             m <<= 1;
             // m is maximum 55 bits
             ulong tmp;
-            ulong lo = umul128(m, mul[0], &tmp);
+            ulong lo = umul128(m, mul[0], out tmp);
             ulong hi;
-            ulong mid = tmp + umul128(m, mul[1], &hi);
+            ulong mid = tmp + umul128(m, mul[1], out hi);
             hi += BooleanToUInt64(mid < tmp); // overflow into hi
 
             ulong lo2 = lo + mul[0];
             ulong mid2 = mid + mul[1] + BooleanToUInt64(lo2 < lo);
             ulong hi2 = hi + BooleanToUInt64(mid2 < mid);
-            *vp = shiftright128(mid2, hi2, j - 64 - 1);
+            vp = shiftright128(mid2, hi2, j - 64 - 1);
 
             if (mmShift == 1)
             {
                 ulong lo3 = lo - mul[0];
                 ulong mid3 = mid - mul[1] - BooleanToUInt64(lo3 > lo);
                 ulong hi3 = hi - BooleanToUInt64(mid3 > mid);
-                *vm = shiftright128(mid3, hi3, j - 64 - 1);
+                vm = shiftright128(mid3, hi3, j - 64 - 1);
             }
             else
             {
@@ -159,7 +161,7 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
                 ulong lo4 = lo3 - mul[0];
                 ulong mid4 = mid3 - mul[1] - BooleanToUInt64(lo4 > lo3);
                 ulong hi4 = hi3 - BooleanToUInt64(mid4 > mid3);
-                *vm = shiftright128(mid4, hi4, j - 64);
+                vm = shiftright128(mid4, hi4, j - 64);
             }
 
             return shiftright128(mid, hi, j - 64 - 1);
@@ -168,7 +170,7 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
 #endif // HAS_64_BIT_INTRINSICS
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static uint decimalLength(ulong v)
+        static int decimalLength(ulong v)
         {
             // This is slightly faster than a loop.
             // The average output length is 16.38 digits, so we check high-to-low.
@@ -201,7 +203,7 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe static floating_decimal_64 d2d(ulong ieeeMantissa, uint ieeeExponent)
+        static floating_decimal_64 d2d(ulong ieeeMantissa, uint ieeeExponent)
         {
             int e2;
             ulong m2;
@@ -249,7 +251,7 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
     double_computeInvPow5(q, pow5);
     vr = mulShiftAll(m2, pow5, i, &vp, &vm, mmShift);
 #else
-                vr = mulShiftAll(m2, DOUBLE_POW5_INV_SPLIT[q], i, &vp, &vm, mmShift);
+                vr = mulShiftAll(m2, DOUBLE_POW5_INV_SPLIT[q], i, out vp, out vm, mmShift);
 #endif
 #if RYU_DEBUG
                 printf("%" PRIu64 " * 2^%d / 10^%u\n", mv, e2, q);
@@ -292,7 +294,7 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
     double_computePow5(i, pow5);
     vr = mulShiftAll(m2, pow5, j, &vp, &vm, mmShift);
 #else
-                vr = mulShiftAll(m2, DOUBLE_POW5_SPLIT[i], j, &vp, &vm, mmShift);
+                vr = mulShiftAll(m2, DOUBLE_POW5_SPLIT[i], j, out vp, out vm, mmShift);
 #endif
 #if RYU_DEBUG
                 printf("%" PRIu64 " * 5^%d / 10^%u\n", mv, -e2, q);
@@ -457,7 +459,7 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe int to_sbytes(floating_decimal_64 v, bool sign, sbyte* result)
+        static int to_sbytes(floating_decimal_64 v, bool sign, Span<sbyte> result)
         {
             // Step 5: Print the decimal representation.
             int index = 0;
@@ -467,7 +469,7 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
             }
 
             ulong output = v.mantissa;
-            uint olength = decimalLength(output);
+            int olength = decimalLength(output);
 
 #if RYU_DEBUG
             printf("DIGITS=%" PRIu64 "\n", v.mantissa);
@@ -483,7 +485,7 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
             // }
             // result[index] = '0' + output % 10;
 
-            uint i = 0;
+            int i = 0;
             // We prefer 32-bit operations, even on 64-bit platforms.
             // We have at most 17 digits, and uint can store 9 digits.
             // If output doesn't fit into uint, we cut off 8 digits,
@@ -502,10 +504,10 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
                 uint c1 = (c / 100) << 1;
                 uint d0 = (d % 100) << 1;
                 uint d1 = (d / 100) << 1;
-                memcpy(result + index + olength - i - 1, DIGIT_TABLE, c0, 2);
-                memcpy(result + index + olength - i - 3, DIGIT_TABLE, c1, 2);
-                memcpy(result + index + olength - i - 5, DIGIT_TABLE, d0, 2);
-                memcpy(result + index + olength - i - 7, DIGIT_TABLE, d1, 2);
+                memcpy(result.Slice(index + olength - i - 1), DIGIT_TABLE, c0, 2);
+                memcpy(result.Slice(index + olength - i - 3), DIGIT_TABLE, c1, 2);
+                memcpy(result.Slice(index + olength - i - 5), DIGIT_TABLE, d0, 2);
+                memcpy(result.Slice(index + olength - i - 7), DIGIT_TABLE, d1, 2);
                 i += 8;
             }
             uint output2 = (uint)output;
@@ -516,15 +518,15 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
                 output2 /= 10000;
                 uint c0 = (c % 100) << 1;
                 uint c1 = (c / 100) << 1;
-                memcpy(result + index + olength - i - 1, DIGIT_TABLE, c0, 2);
-                memcpy(result + index + olength - i - 3, DIGIT_TABLE, c1, 2);
+                memcpy(result.Slice(index + olength - i - 1), DIGIT_TABLE, c0, 2);
+                memcpy(result.Slice(index + olength - i - 3), DIGIT_TABLE, c1, 2);
                 i += 4;
             }
             if (output2 >= 100)
             {
                 uint c = (output2 % 100) << 1;
                 output2 /= 100;
-                memcpy(result + index + olength - i - 1, DIGIT_TABLE, c, 2);
+                memcpy(result.Slice(index + olength - i - 1), DIGIT_TABLE, c, 2);
                 i += 2;
             }
             if (output2 >= 10)
@@ -551,8 +553,13 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
             }
 
             // Print the exponent.
-            result[index++] = (sbyte)'E';
             int exp = v.exponent + (int)olength - 1;
+            if (exp >= -3 && exp < 7)
+            {
+                return index;
+            }
+
+            result[index++] = (sbyte)'E';
             if (exp < 0)
             {
                 result[index++] = (sbyte)'-';
@@ -562,13 +569,13 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
             if (exp >= 100)
             {
                 int c = exp % 10;
-                memcpy(result + index, DIGIT_TABLE, 2 * (exp / 10), 2);
+                memcpy(result.Slice(index), DIGIT_TABLE, 2 * (exp / 10), 2);
                 result[index + 2] = (sbyte)('0' + c);
                 index += 3;
             }
             else if (exp >= 10)
             {
-                memcpy(result + index, DIGIT_TABLE, 2 * exp, 2);
+                memcpy(result.Slice(index), DIGIT_TABLE, 2 * exp, 2);
                 index += 2;
             }
             else
@@ -579,10 +586,10 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
             return index;
         }
 
-        unsafe int d2s_buffered_n(double f, sbyte* result)
+        static int d2s_buffered_n(double f, Span<sbyte> result)
         {
             // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-            ulong bits = double_to_bits(f);
+            ulong bits = (ulong)BitConverter.DoubleToInt64Bits(f);
 
 #if RYU_DEBUG
             printf("IN=");
@@ -607,12 +614,15 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
             return to_sbytes(v, ieeeSign, result);
         }
 
-        public unsafe void d2s_buffered(double f, sbyte* result)
+        public static string DoubleToString(double f)
         {
+            Span<sbyte> result = stackalloc sbyte[26];
             int index = d2s_buffered_n(f, result);
 
             // Terminate the string.
             result[index] = default;
+
+            return CopyAsciiSpanToNewString(result, index);
         }
     }
 }

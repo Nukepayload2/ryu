@@ -27,7 +27,7 @@ static inline ulong shiftright128(ulong lo, ulong hi, uint dist) {
 #else // defined(HAS_64_BIT_INTRINSICS)
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe ulong umul128(ulong a, ulong b, ulong* productHi)
+        static ulong umul128(ulong a, ulong b, out ulong productHi)
         {
             // The casts here help MSVC to avoid calls to the __allmul library function.
             uint aLo = (uint)a;
@@ -54,7 +54,7 @@ static inline ulong shiftright128(ulong lo, ulong hi, uint dist) {
             ulong pHi = b11 + mid1Hi + mid2Hi;
             ulong pLo = ((ulong)mid2Lo << 32) + b00Lo;
 
-            *productHi = pHi;
+            productHi = pHi;
             return pLo;
         }
 
