@@ -115,22 +115,22 @@ End Function
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Function div5(x As ULong) As ULong
-        Return x \ 5
+        Return x \ 5UL
     End Function
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Function div10(x As ULong) As ULong
-        Return x \ 10
+        Return x \ 10UL
     End Function
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Function div100(x As ULong) As ULong
-        Return x \ 100
+        Return x \ 100UL
     End Function
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Function div1e8(x As ULong) As ULong
-        Return x \ 100000000
+        Return x \ 100000000UL
     End Function
 
 #End If ' RYU_32_BIT_PLATFORM

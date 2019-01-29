@@ -9,12 +9,12 @@ Module DoubleToString ' D2s
         Dim count As UInteger = 0
         Do
             Dim q As ULong = div5(value)
-            Dim r As UInteger = CUInt(value - 5 * q)
-            If r <> 0 Then
+            Dim r As UInteger = CUInt(value - 5UL * q)
+            If r <> 0UI Then
                 Exit Do
             End If
             value = q
-            count += 1
+            count += 1UI
         Loop
         Return count
     End Function
@@ -30,7 +30,7 @@ Module DoubleToString ' D2s
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Private Function multipleOfPowerOf2(value As ULong, p As Integer) As Boolean
         ' return __builtin_ctzll(value) >= p;
-        Return (value And ((1UL << p) - 1)) = 0
+        Return (value And ((1UL << p) - 1UL)) = 0UL
     End Function
 
     ' We need a 64x128-bit multiplication and a subsequent 128-bit shift.
@@ -161,52 +161,52 @@ End Function
         ' The average output length is 16.38 digits, so we check high-to-low.
         ' Function precondition: v is not an 18, 19, or 20-digit number.
         ' (17 digits are sufficient for round-tripping.)
-        If v >= 10000000000000000L Then
+        If v >= 10000000000000000UL Then
             Return 17
         End If
-        If v >= 1000000000000000L Then
+        If v >= 1000000000000000UL Then
             Return 16
         End If
-        If v >= 100000000000000L Then
+        If v >= 100000000000000UL Then
             Return 15
         End If
-        If v >= 10000000000000L Then
+        If v >= 10000000000000UL Then
             Return 14
         End If
-        If v >= 1000000000000L Then
+        If v >= 1000000000000UL Then
             Return 13
         End If
-        If v >= 100000000000L Then
+        If v >= 100000000000UL Then
             Return 12
         End If
-        If v >= 10000000000L Then
+        If v >= 10000000000UL Then
             Return 11
         End If
-        If v >= 1000000000L Then
+        If v >= 1000000000UL Then
             Return 10
         End If
-        If v >= 100000000L Then
+        If v >= 100000000UL Then
             Return 9
         End If
-        If v >= 10000000L Then
+        If v >= 10000000UL Then
             Return 8
         End If
-        If v >= 1000000L Then
+        If v >= 1000000UL Then
             Return 7
         End If
-        If v >= 100000L Then
+        If v >= 100000UL Then
             Return 6
         End If
-        If v >= 10000L Then
+        If v >= 10000UL Then
             Return 5
         End If
-        If v >= 1000L Then
+        If v >= 1000UL Then
             Return 4
         End If
-        If v >= 100L Then
+        If v >= 100UL Then
             Return 3
         End If
-        If v >= 10L Then
+        If v >= 10UL Then
             Return 2
         End If
         Return 1
@@ -222,15 +222,15 @@ End Function
     Private Function d2d(ieeeMantissa As ULong, ieeeExponent As UInteger) As floating_decimal_64
         Dim e2 As Integer
         Dim m2 As ULong
-        If ieeeExponent = 0 Then
+        If ieeeExponent = 0UI Then
             ' We subtract 2 so that the bounds computation has 2 additional bits.
-            e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2
+            e2 = 1I - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2I
             m2 = ieeeMantissa
         Else
-            e2 = CInt(ieeeExponent) - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2
+            e2 = CInt(ieeeExponent) - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2I
             m2 = (1UL << DOUBLE_MANTISSA_BITS) Or ieeeMantissa
         End If
-        Dim even As Boolean = (m2 And 1) = 0
+        Dim even As Boolean = (m2 And 1UL) = 0UL
         Dim acceptBounds As Boolean = even
 
 #If RYU_DEBUG Then
@@ -238,9 +238,9 @@ End Function
 #End If
 
         ' Step 2: Determine the interval of valid decimal representations.
-        Dim mv As ULong = 4 * m2
+        Dim mv As ULong = 4UL * m2
         ' Implicit bool -> int conversion. True is 1, false is 0.
-        Dim mmShift As UInteger = BooleanToUInt32(ieeeMantissa <> 0 OrElse ieeeExponent <= 1)
+        Dim mmShift As UInteger = BooleanToUInt32(ieeeMantissa <> 0UL OrElse ieeeExponent <= 1UI)
         ' We would compute mp and mm like this:
         ' ulong mp = 4 * m2 + 2;
         ' ulong mm = mv - 1 - mmShift;
@@ -262,32 +262,32 @@ End Function
 	double_computeInvPow5(q, pow5)
 	vr = mulShiftAll(m2, pow5, i, &vp, &vm, mmShift)
 #Else
-            vr = mulShiftAll(m2, DOUBLE_POW5_INV_SPLIT(q), i, vp, vm, mmShift)
+            vr = mulShiftAll(m2, DOUBLE_POW5_INV_SPLIT(CInt(q)), i, vp, vm, mmShift)
 #End If
 #If RYU_DEBUG Then
 				printf("%" PRIu64 " * 2^%d / 10^%u" & vbLf, mv, e2, q)
 				printf("V+=%" PRIu64 vbLf & "V =%" PRIu64 vbLf & "V-=%" PRIu64 vbLf, vp, vr, vm)
 #End If
-            If q <= 21 Then
+            If q <= 21UI Then
                 ' This should use q <= 22, but I think 21 is also safe. Smaller values
                 ' may still be safe, but it's more difficult to reason about them.
                 ' Only one of mp, mv, and mm can be a multiple of 5, if any.
-                Dim mvMod5 As UInteger = CUInt(Math.Truncate(mv - 5 * div5(mv)))
-                If mvMod5 = 0 Then
+                Dim mvMod5 As UInteger = CUInt(mv - 5UL * div5(mv))
+                If mvMod5 = 0UI Then
                     vrIsTrailingZeros = multipleOfPowerOf5(mv, q)
                 ElseIf acceptBounds Then
                     ' Same as min(e2 + (~mm & 1), pow5Factor(mm)) >= q
                     ' <=> e2 + (~mm & 1) >= q && pow5Factor(mm) >= q
                     ' <=> true && pow5Factor(mm) >= q, since e2 >= q.
-                    vmIsTrailingZeros = multipleOfPowerOf5(mv - 1 - mmShift, q)
+                    vmIsTrailingZeros = multipleOfPowerOf5(mv - 1UL - mmShift, q)
                 Else
                     ' Same as min(e2 + 1, pow5Factor(mp)) >= q.
-                    vp -= BooleanToUInt64(multipleOfPowerOf5(mv + 2, q))
+                    vp -= BooleanToUInt64(multipleOfPowerOf5(mv + 2UL, q))
                 End If
             End If
         Else
             ' This expression is slightly faster than max(0, log10Pow5(-e2) - 1).
-            Dim q As UInteger = log10Pow5(-e2) - BooleanToUInt32(-e2 > 1)
+            Dim q As UInteger = log10Pow5(-e2) - BooleanToUInt32(-e2 > 1I)
             e10 = CInt(q) + e2
             Dim i As Integer = -e2 - CInt(q)
             Dim k As Integer = pow5bits(i) - DOUBLE_POW5_BITCOUNT
@@ -304,16 +304,16 @@ End Function
 				printf("%u %d %d %d" & vbLf, q, i, k, j)
 				printf("V+=%" PRIu64 vbLf & "V =%" PRIu64 vbLf & "V-=%" PRIu64 vbLf, vp, vr, vm)
 #End If
-            If q <= 1 Then
+            If q <= 1UI Then
                 ' {vr,vp,vm} is trailing zeros if {mv,mp,mm} has at least q trailing 0 bits.
                 ' mv = 4 * m2, so it always has at least two trailing 0 bits.
                 vrIsTrailingZeros = True
                 If acceptBounds Then
                     ' mm = mv - 1 - mmShift, so it has 1 trailing 0 bit iff mmShift == 1.
-                    vmIsTrailingZeros = mmShift = 1
+                    vmIsTrailingZeros = mmShift = 1UI
                 Else
                     ' mp = mv + 2, so it always has at least one trailing 0 bit.
-                    vp -= 1
+                    vp -= 1UL
                 End If
             ElseIf q < 63 Then ' TODO(ulfjack): Use a tighter bound here.
                 ' We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q - 1
@@ -347,10 +347,10 @@ End Function
                 If vpDiv10 <= vmDiv10 Then
                     Exit Do
                 End If
-                Dim vmMod10 As UInteger = CUInt(vm - 10 * vmDiv10)
+                Dim vmMod10 As UInteger = CUInt(vm - 10UL * vmDiv10)
                 Dim vrDiv10 As ULong = div10(vr)
-                Dim vrMod10 As UInteger = CUInt(vr - 10 * vrDiv10)
-                vmIsTrailingZeros = vmIsTrailingZeros And vmMod10 = 0
+                Dim vrMod10 As UInteger = CUInt(vr - 10UL * vrDiv10)
+                vmIsTrailingZeros = vmIsTrailingZeros And vmMod10 = 0UI
                 vrIsTrailingZeros = vrIsTrailingZeros And lastRemovedDigit = 0
                 lastRemovedDigit = CByte(vrMod10)
                 vr = vrDiv10
@@ -365,14 +365,14 @@ End Function
             If vmIsTrailingZeros Then
                 Do
                     Dim vmDiv10 As ULong = div10(vm)
-                    Dim vmMod10 As UInteger = CUInt(vm - 10 * vmDiv10)
-                    If vmMod10 <> 0 Then
+                    Dim vmMod10 As UInteger = CUInt(vm - 10UL * vmDiv10)
+                    If vmMod10 <> 0UI Then
                         Exit Do
                     End If
                     Dim vpDiv10 As ULong = div10(vp)
                     Dim vrDiv10 As ULong = div10(vr)
-                    Dim vrMod10 As UInteger = CUInt(vr - 10 * vrDiv10)
-                    vrIsTrailingZeros = vrIsTrailingZeros And lastRemovedDigit = 0
+                    Dim vrMod10 As UInteger = CUInt(vr - 10UL * vrDiv10)
+                    vrIsTrailingZeros = vrIsTrailingZeros And lastRemovedDigit = 0I
                     lastRemovedDigit = CByte(vrMod10)
                     vr = vrDiv10
                     vp = vpDiv10
@@ -384,12 +384,12 @@ End Function
 				printf("%" PRIu64 " %d" & vbLf, vr, lastRemovedDigit)
 				printf("vr is trailing zeros=%s" & vbLf,If(vrIsTrailingZeros, "true", "false"))
 #End If
-            If vrIsTrailingZeros AndAlso lastRemovedDigit = 5 AndAlso vr Mod 2 = 0 Then
+            If vrIsTrailingZeros AndAlso lastRemovedDigit = 5I AndAlso vr Mod 2UL = 0UL Then
                 ' Round even if the exact number is .....50..0.
-                lastRemovedDigit = 4
+                lastRemovedDigit = 4I
             End If
             ' We need to take vr + 1 if vr is outside bounds or we need to round up.
-            output = vr + BooleanToUInt64((vr = vm AndAlso (Not acceptBounds OrElse Not vmIsTrailingZeros)) OrElse lastRemovedDigit >= 5)
+            output = vr + BooleanToUInt64((vr = vm AndAlso (Not acceptBounds OrElse Not vmIsTrailingZeros)) OrElse lastRemovedDigit >= 5I)
         Else
             ' Specialized for the common case (~99.3%). Percentages below are relative to this.
             Dim roundUp As Boolean = False
@@ -397,12 +397,12 @@ End Function
             Dim vmDiv100 As ULong = div100(vm)
             If vpDiv100 > vmDiv100 Then ' Optimization: remove two digits at a time (~86.2%).
                 Dim vrDiv100 As ULong = div100(vr)
-                Dim vrMod100 As UInteger = CUInt(vr - 100 * vrDiv100)
-                roundUp = vrMod100 >= 50
+                Dim vrMod100 As UInteger = CUInt(vr - 100UL * vrDiv100)
+                roundUp = vrMod100 >= 50UI
                 vr = vrDiv100
                 vp = vpDiv100
                 vm = vmDiv100
-                removed += 2
+                removed += 2I
             End If
             ' Loop iterations below (approximately), without optimization above:
             ' 0: 0.03%, 1: 13.8%, 2: 70.6%, 3: 14.0%, 4: 1.40%, 5: 0.14%, 6+: 0.02%
@@ -415,12 +415,12 @@ End Function
                     Exit Do
                 End If
                 Dim vrDiv10 As ULong = div10(vr)
-                Dim vrMod10 As UInteger = CUInt(vr - 10 * vrDiv10)
-                roundUp = vrMod10 >= 5
+                Dim vrMod10 As UInteger = CUInt(vr - 10UL * vrDiv10)
+                roundUp = vrMod10 >= 5UI
                 vr = vrDiv10
                 vp = vpDiv10
                 vm = vmDiv10
-                removed += 1
+                removed += 1I
             Loop
 #If RYU_DEBUG Then
 				printf("%" PRIu64 " roundUp=%s" & vbLf, vr,If(roundUp, "true", "false"))
@@ -452,7 +452,7 @@ End Function
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = (sbyte)"-"c;
             result(index) = AscW("-"c)
-            index += 1
+            index += 1I
         End If
 
         Dim output As ULong = v.mantissa
@@ -477,19 +477,19 @@ End Function
         ' We have at most 17 digits, and uint can store 9 digits.
         ' If output doesn't fit into uint, we cut off 8 digits,
         ' so the rest will fit into uint.
-        If (output >> 32) <> 0 Then
+        If (output >> 32) <> 0UL Then
             ' Expensive 64-bit division.
             Dim q As ULong = div1e8(output)
-            Dim output3 As UInteger = CUInt(output - 100000000 * q)
+            Dim output3 As UInteger = CUInt(output - 100000000UL * q)
             output = q
 
-            Dim c As UInteger = output3 Mod 10000
-            output3 \= 10000
-            Dim d As UInteger = output3 Mod 10000
-            Dim c0 As UInteger = (c Mod 100) << 1
-            Dim c1 As UInteger = (c \ 100) << 1
-            Dim d0 As UInteger = (d Mod 100) << 1
-            Dim d1 As UInteger = (d \ 100) << 1
+            Dim c As UInteger = output3 Mod 10000UI
+            output3 \= 10000UI
+            Dim d As UInteger = output3 Mod 10000UI
+            Dim c0 As UInteger = (c Mod 100UI) << 1UI
+            Dim c1 As UInteger = (c \ 100UI) << 1UI
+            Dim d0 As UInteger = (d Mod 100UI) << 1UI
+            Dim d1 As UInteger = (d \ 100UI) << 1UI
             memcpy(result.Slice(index + olength - i - 1), DIGIT_TABLE, c0, 2)
             memcpy(result.Slice(index + olength - i - 3), DIGIT_TABLE, c1, 2)
             memcpy(result.Slice(index + olength - i - 5), DIGIT_TABLE, d0, 2)
@@ -497,44 +497,41 @@ End Function
             i += 8
         End If
         Dim output2 As UInteger = CUInt(output)
-        Do While output2 >= 10000
-            Dim c As UInteger = output2 Mod 10000
+        Do While output2 >= 10000UI
+            Dim c As UInteger = output2 Mod 10000UI
 
-            output2 \= 10000
-            Dim c0 As UInteger = (c Mod 100) << 1
-            Dim c1 As UInteger = (c \ 100) << 1
+            output2 \= 10000UI
+            Dim c0 As UInteger = (c Mod 100UI) << 1UI
+            Dim c1 As UInteger = (c \ 100UI) << 1UI
             memcpy(result.Slice(index + olength - i - 1), DIGIT_TABLE, c0, 2)
             memcpy(result.Slice(index + olength - i - 3), DIGIT_TABLE, c1, 2)
             i += 4
         Loop
-        If output2 >= 100 Then
-            Dim c As UInteger = (output2 Mod 100) << 1
-            output2 \= 100
+        If output2 >= 100UI Then
+            Dim c As UInteger = (output2 Mod 100UI) << 1UI
+            output2 \= 100UI
             memcpy(result.Slice(index + olength - i - 1), DIGIT_TABLE, c, 2)
             i += 2
         End If
-        If output2 >= 10 Then
-            Dim c As UInteger = output2 << 1
+        If output2 >= 10UI Then
+            Dim c As UInteger = output2 << 1UI
             ' We can't use memcpy here: the decimal dot goes between these two digits.
-            result(index + olength - i) = CSByte(DIGIT_TABLE(c + 1))
-            result(index) = CSByte(DIGIT_TABLE(c))
+            result(index + olength - i) = CSByte(DIGIT_TABLE(CInt(c + 1UI)))
+            result(index) = CSByte(DIGIT_TABLE(CInt(c)))
         Else
-            result(index) = CSByte(Math.Truncate(AscW("0"c) + output2))
+            result(index) = CSByte(AscW("0"c) + output2)
         End If
 
         ' Print decimal point if needed.
         If olength > 1 Then
             result(index + 1) = AscW("."c)
-            index += CInt(olength) + 1
+            index += olength + 1
         Else
             index += 1
         End If
 
         ' Print the exponent.
-        Dim exp As Integer = v.exponent + CInt(olength) - 1
-        If exp >= -3 AndAlso exp < 7 Then
-            Return index
-        End If
+        Dim exp As Integer = v.exponent + olength - 1
 
         'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
         'ORIGINAL LINE: result[index++] = (sbyte)"E"c;
@@ -551,7 +548,7 @@ End Function
         If exp >= 100 Then
             Dim c As Integer = exp Mod 10
             memcpy(result.Slice(index), DIGIT_TABLE, 2 * (exp \ 10), 2)
-            result(index + 2) = CSByte(Math.Truncate(AscW("0"c) + c))
+            result(index + 2) = CSByte(AscW("0"c) + c)
             index += 3
         ElseIf exp >= 10 Then
             memcpy(result.Slice(index), DIGIT_TABLE, 2 * exp, 2)
@@ -559,7 +556,7 @@ End Function
         Else
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = (sbyte)("0"c + exp);
-            result(index) = CSByte(Math.Truncate(AscW("0"c) + exp))
+            result(index) = CSByte(AscW("0"c) + exp)
             index += 1
         End If
 
@@ -580,12 +577,12 @@ End Function
 #End If
 
         ' Decode bits into sign, mantissa, and exponent.
-        Dim ieeeSign As Boolean = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) And 1) <> 0
-        Dim ieeeMantissa As ULong = bits And ((1UL << DOUBLE_MANTISSA_BITS) - 1)
-        Dim ieeeExponent As UInteger = CUInt((bits >> DOUBLE_MANTISSA_BITS) And ((1UI << DOUBLE_EXPONENT_BITS) - 1))
+        Dim ieeeSign As Boolean = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) And 1UL) <> 0UL
+        Dim ieeeMantissa As ULong = bits And ((1UL << DOUBLE_MANTISSA_BITS) - 1UL)
+        Dim ieeeExponent As UInteger = CUInt((bits >> DOUBLE_MANTISSA_BITS) And ((1UI << DOUBLE_EXPONENT_BITS) - 1UI))
         ' Case distinction; exit early for the easy cases.
-        If ieeeExponent = ((1UI << DOUBLE_EXPONENT_BITS) - 1UI) OrElse (ieeeExponent = 0 AndAlso ieeeMantissa = 0) Then
-            Return copy_special_str(result, ieeeSign, ieeeExponent <> 0, ieeeMantissa <> 0)
+        If ieeeExponent = ((1UI << DOUBLE_EXPONENT_BITS) - 1UI) OrElse (ieeeExponent = 0UI AndAlso ieeeMantissa = 0UL) Then
+            Return copy_special_str(result, ieeeSign, ieeeExponent <> 0UI, ieeeMantissa <> 0UL)
         End If
 
         Dim v As floating_decimal_64 = d2d(ieeeMantissa, ieeeExponent)

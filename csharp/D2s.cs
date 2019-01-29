@@ -554,10 +554,6 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
 
             // Print the exponent.
             int exp = v.exponent + (int)olength - 1;
-            if (exp >= -3 && exp < 7)
-            {
-                return index;
-            }
 
             result[index++] = (sbyte)'E';
             if (exp < 0)

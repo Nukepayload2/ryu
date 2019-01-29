@@ -17,14 +17,14 @@ Module Common
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Function log10Pow2(e As Integer) As UInteger
         ' The first value this approximation fails for is 2^1651 which is just greater than 10^297.
-        Return ((CUInt(e)) * 78913) >> 18
+        Return ((CUInt(e)) * 78913UI) >> 18
     End Function
 
     ' Returns floor(log_10(5^e)).
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Function log10Pow5(e As Integer) As UInteger
         ' The first value this approximation fails for is 5^2621 which is just greater than 10^1832.
-        Return ((CUInt(e)) * 732923) >> 20
+        Return ((CUInt(e)) * 732923UI) >> 20
     End Function
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>

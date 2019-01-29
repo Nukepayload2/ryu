@@ -19,13 +19,13 @@ Module SingleToString
     Private Function pow5Factor(value As UInteger) As UInteger
         Dim count As UInteger = 0
         Do
-            Dim q As UInteger = value \ 5
-            Dim r As UInteger = value Mod 5
+            Dim q As UInteger = value \ 5UI
+            Dim r As UInteger = value Mod 5UI
             If r <> 0 Then
                 Exit Do
             End If
             value = q
-            count += 1
+            count += 1UI
         Loop
         Return count
     End Function
@@ -73,12 +73,12 @@ Module SingleToString
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Private Function mulPow5InvDivPow2(m As UInteger, q As UInteger, j As Integer) As UInteger
-        Return mulShift(m, FLOAT_POW5_INV_SPLIT(q), j)
+        Return mulShift(m, FLOAT_POW5_INV_SPLIT(CInt(q)), j)
     End Function
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
     Private Function mulPow5divPow2(m As UInteger, i As UInteger, j As Integer) As UInteger
-        Return mulShift(m, FLOAT_POW5_SPLIT(i), j)
+        Return mulShift(m, FLOAT_POW5_SPLIT(CInt(i)), j)
     End Function
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
@@ -124,13 +124,13 @@ Module SingleToString
         Dim m2 As UInteger
         If ieeeExponent = 0 Then
             ' We subtract 2 so that the bounds computation has 2 additional bits.
-            e2 = 1 - FLOAT_BIAS - FLOAT_MANTISSA_BITS - 2
+            e2 = 1 - FLOAT_BIAS - FLOAT_MANTISSA_BITS - 2I
             m2 = ieeeMantissa
         Else
-            e2 = CInt(ieeeExponent) - FLOAT_BIAS - FLOAT_MANTISSA_BITS - 2
+            e2 = CInt(ieeeExponent) - FLOAT_BIAS - FLOAT_MANTISSA_BITS - 2I
             m2 = (1UI << FLOAT_MANTISSA_BITS) Or ieeeMantissa
         End If
-        Dim even As Boolean = (m2 And 1) = 0
+        Dim even As Boolean = (m2 And 1UI) = 0UI
         Dim acceptBounds As Boolean = even
 
 #If RYU_DEBUG Then
@@ -138,11 +138,11 @@ Module SingleToString
 #End If
 
         ' Step 2: Determine the interval of valid decimal representations.
-        Dim mv As UInteger = 4 * m2
-        Dim mp As UInteger = 4 * m2 + 2
+        Dim mv As UInteger = 4UI * m2
+        Dim mp As UInteger = 4UI * m2 + 2UI
         ' Implicit bool -> int conversion. True is 1, false is 0.
-        Dim mmShift As UInteger = BooleanToUInt32(ieeeMantissa <> 0 OrElse ieeeExponent <= 1)
-        Dim mm As UInteger = 4 * m2 - 1 - mmShift
+        Dim mmShift As UInteger = BooleanToUInt32(ieeeMantissa <> 0UI OrElse ieeeExponent <= 1UI)
+        Dim mm As UInteger = 4UI * m2 - 1UI - mmShift
 
         ' Step 3: Convert to a decimal power base using 64-bit arithmetic.
         Dim vr, vp, vm As UInteger
@@ -162,12 +162,12 @@ Module SingleToString
 			printf("%u * 2^%d / 10^%u" & vbLf, mv, e2, q)
 			printf("V+=%u" & vbLf & "V =%u" & vbLf & "V-=%u" & vbLf, vp, vr, vm)
 #End If
-            If q <> 0 AndAlso (vp - 1) \ 10 <= vm \ 10 Then
+            If q <> 0UI AndAlso (vp - 1UI) \ 10UI <= vm \ 10UI Then
                 ' We need to know one removed digit even if we are not going to loop below. We could use
                 ' q = X - 1 above, except that would require 33 bits for the result, and we've found that
                 ' 32-bit arithmetic is faster even on 64-bit machines.
-                Dim l As Integer = FLOAT_POW5_INV_BITCOUNT + pow5bits(CInt(q - 1)) - 1
-                lastRemovedDigit = CByte(mulPow5InvDivPow2(mv, q - 1, -e2 + CInt(q) - 1 + l) Mod 10)
+                Dim l As Integer = FLOAT_POW5_INV_BITCOUNT + pow5bits(CInt(q - 1UI)) - 1I
+                lastRemovedDigit = CByte(mulPow5InvDivPow2(mv, q - 1UI, -e2 + CInt(q) - 1I + l) Mod 10UI)
             End If
             If q <= 9 Then
                 ' The largest power of 5 that fits in 24 bits is 5^10, but q <= 9 seems to be safe as well.
@@ -194,8 +194,8 @@ Module SingleToString
 			printf("%u %d %d %d" & vbLf, q, i, k, j)
 			printf("V+=%u" & vbLf & "V =%u" & vbLf & "V-=%u" & vbLf, vp, vr, vm)
 #End If
-            If q <> 0 AndAlso (vp - 1) \ 10 <= vm \ 10 Then
-                j = CInt(q) - 1 - (pow5bits(i + 1) - FLOAT_POW5_BITCOUNT)
+            If q <> 0UI AndAlso (vp - 1UI) \ 10UI <= vm \ 10UI Then
+                j = CInt(q) - 1I - (pow5bits(i + 1I) - FLOAT_POW5_BITCOUNT)
                 lastRemovedDigit = CByte(mulPow5divPow2(mv, CUInt(i + 1), j) Mod 10)
             End If
             If q <= 1 Then
@@ -204,13 +204,13 @@ Module SingleToString
                 vrIsTrailingZeros = True
                 If acceptBounds Then
                     ' mm = mv - 1 - mmShift, so it has 1 trailing 0 bit iff mmShift == 1.
-                    vmIsTrailingZeros = mmShift = 1
+                    vmIsTrailingZeros = mmShift = 1UI
                 Else
                     ' mp = mv + 2, so it always has at least one trailing 0 bit.
-                    vp -= 1
+                    vp -= 1UI
                 End If
             ElseIf q < 31 Then ' TODO(ulfjack): Use a tighter bound here.
-                vrIsTrailingZeros = multipleOfPowerOf2(mv, CInt(q) - 1)
+                vrIsTrailingZeros = multipleOfPowerOf2(mv, CInt(q) - 1I)
 #If RYU_DEBUG Then
 				printf("vr is trailing zeros=%s" & vbLf,If(vrIsTrailingZeros, "true", "false"))
 #End If
@@ -228,14 +228,14 @@ Module SingleToString
         Dim output As UInteger
         If vmIsTrailingZeros OrElse vrIsTrailingZeros Then
             ' General case, which happens rarely (~4.0%).
-            Do While vp \ 10 > vm \ 10
-                vmIsTrailingZeros = vmIsTrailingZeros And vm Mod 10 = 0
-                vrIsTrailingZeros = vrIsTrailingZeros And lastRemovedDigit = 0
-                lastRemovedDigit = CByte(vr Mod 10)
-                vr \= 10
-                vp \= 10
-                vm \= 10
-                removed += 1
+            Do While vp \ 10UI > vm \ 10UI
+                vmIsTrailingZeros = vmIsTrailingZeros And vm Mod 10UI = 0UI
+                vrIsTrailingZeros = vrIsTrailingZeros And lastRemovedDigit = 0I
+                lastRemovedDigit = CByte(vr Mod 10UI)
+                vr \= 10UI
+                vp \= 10UI
+                vm \= 10UI
+                removed += 1I
             Loop
 #If RYU_DEBUG Then
 			printf("V+=%u" & vbLf & "V =%u" & vbLf & "V-=%u" & vbLf, vp, vr, vm)
@@ -243,21 +243,21 @@ Module SingleToString
 #End If
             If vmIsTrailingZeros Then
                 Do While vm Mod 10 = 0
-                    vrIsTrailingZeros = vrIsTrailingZeros And lastRemovedDigit = 0
-                    lastRemovedDigit = CByte(vr Mod 10)
-                    vr \= 10
-                    vp \= 10
-                    vm \= 10
-                    removed += 1
+                    vrIsTrailingZeros = vrIsTrailingZeros And lastRemovedDigit = 0I
+                    lastRemovedDigit = CByte(vr Mod 10UI)
+                    vr \= 10UI
+                    vp \= 10UI
+                    vm \= 10UI
+                    removed += 1I
                 Loop
             End If
 #If RYU_DEBUG Then
 			printf("%u %d" & vbLf, vr, lastRemovedDigit)
 			printf("vr is trailing zeros=%s" & vbLf,If(vrIsTrailingZeros, "true", "false"))
 #End If
-            If vrIsTrailingZeros AndAlso lastRemovedDigit = 5 AndAlso vr Mod 2 = 0 Then
+            If vrIsTrailingZeros AndAlso lastRemovedDigit = 5I AndAlso vr Mod 2UI = 0UI Then
                 ' Round even if the exact number is .....50..0.
-                lastRemovedDigit = 4
+                lastRemovedDigit = 4I
             End If
             ' We need to take vr + 1 if vr is outside bounds or we need to round up.
             output = vr + BooleanToUInt32((vr = vm AndAlso (Not acceptBounds OrElse Not vmIsTrailingZeros)) OrElse lastRemovedDigit >= 5)
@@ -265,11 +265,11 @@ Module SingleToString
             ' Specialized for the common case (~96.0%). Percentages below are relative to this.
             ' Loop iterations below (approximately):
             ' 0: 13.6%, 1: 70.7%, 2: 14.1%, 3: 1.39%, 4: 0.14%, 5+: 0.01%
-            Do While vp \ 10 > vm \ 10
-                lastRemovedDigit = CByte(vr Mod 10)
-                vr \= 10
-                vp \= 10
-                vm \= 10
+            Do While vp \ 10UI > vm \ 10UI
+                lastRemovedDigit = CByte(vr Mod 10UI)
+                vr \= 10UI
+                vp \= 10UI
+                vm \= 10UI
                 removed += 1
             Loop
 #If RYU_DEBUG Then
@@ -277,7 +277,7 @@ Module SingleToString
 			printf("vr is trailing zeros=%s" & vbLf,If(vrIsTrailingZeros, "true", "false"))
 #End If
             ' We need to take vr + 1 if vr is outside bounds or we need to round up.
-            output = vr + BooleanToUInt32(vr = vm OrElse lastRemovedDigit >= 5)
+            output = vr + BooleanToUInt32(vr = vm OrElse lastRemovedDigit >= 5I)
         End If
         Dim exp As Integer = e10 + removed
 
@@ -323,28 +323,28 @@ Module SingleToString
         ' result[index] = '0' + output % 10;
         Dim i As Integer = 0
         Do While output >= 10000
-            Dim c As UInteger = output Mod 10000
+            Dim c As UInteger = output Mod 10000UI
 
-            output \= 10000
-            Dim c0 As UInteger = (c Mod 100) << 1
-            Dim c1 As UInteger = (c \ 100) << 1
+            output \= 10000UI
+            Dim c0 As UInteger = (c Mod 100UI) << 1UI
+            Dim c1 As UInteger = (c \ 100UI) << 1UI
             memcpy(result.Slice(index + olength - i - 1), DIGIT_TABLE, c0, 2)
             memcpy(result.Slice(index + olength - i - 3), DIGIT_TABLE, c1, 2)
             i += 4
         Loop
         If output >= 100 Then
-            Dim c As UInteger = (output Mod 100) << 1
-            output \= 100
+            Dim c As UInteger = (output Mod 100UI) << 1UI
+            output \= 100UI
             memcpy(result.Slice(index + olength - i - 1), DIGIT_TABLE, c, 2)
             i += 2
         End If
         If output >= 10 Then
             Dim c As UInteger = output << 1
             ' We can't use memcpy here: the decimal dot goes between these two digits.
-            result(index + olength - i) = CSByte(DIGIT_TABLE(c + 1))
-            result(index) = CSByte(DIGIT_TABLE(c))
+            result(index + olength - i) = CSByte(DIGIT_TABLE(CInt(c + 1UI)))
+            result(index) = CSByte(DIGIT_TABLE(CInt(c)))
         Else
-            result(index) = CSByte(Math.Truncate(AscW("0"c) + output))
+            result(index) = CSByte(AscW("0"c) + output)
         End If
 
         ' Print decimal point if needed.
@@ -357,9 +357,6 @@ Module SingleToString
 
         ' Print the exponent.
         Dim exp As Integer = v.exponent + CInt(olength) - 1
-        If exp >= -3 AndAlso exp < 7 Then
-            Return index
-        End If
 
         'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
         'ORIGINAL LINE: result[index++] = (sbyte)"E"c;
@@ -379,7 +376,7 @@ Module SingleToString
         Else
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = (sbyte)("0"c + exp);
-            result(index) = CSByte(Math.Truncate(AscW("0"c) + exp))
+            result(index) = CSByte(AscW("0"c) + exp)
             index += 1
         End If
 
@@ -389,7 +386,7 @@ Module SingleToString
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     Private Function f2s_buffered_n(f As Single, result As Span(Of SByte)) As Integer
         ' Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-        Dim bits As UInteger = CUInt(Math.Truncate(BitConverter.SingleToInt32Bits(f)))
+        Dim bits As UInteger = CUInt(BitConverter.SingleToInt32Bits(f))
 
 #If RYU_DEBUG Then
 		printf("IN=")
@@ -401,12 +398,12 @@ Module SingleToString
 
         ' Decode bits into sign, mantissa, and exponent.
         Dim ieeeSign As Boolean = ((bits >> (FLOAT_MANTISSA_BITS + FLOAT_EXPONENT_BITS)) And 1) <> 0
-        Dim ieeeMantissa As UInteger = bits And ((1UI << FLOAT_MANTISSA_BITS) - 1)
-        Dim ieeeExponent As UInteger = (bits >> FLOAT_MANTISSA_BITS) And ((1UI << FLOAT_EXPONENT_BITS) - 1)
+        Dim ieeeMantissa As UInteger = bits And ((1UI << FLOAT_MANTISSA_BITS) - 1UI)
+        Dim ieeeExponent As UInteger = (bits >> FLOAT_MANTISSA_BITS) And ((1UI << FLOAT_EXPONENT_BITS) - 1UI)
 
         ' Case distinction; exit early for the easy cases.
         If ieeeExponent = ((1UI << FLOAT_EXPONENT_BITS) - 1UI) OrElse (ieeeExponent = 0 AndAlso ieeeMantissa = 0) Then
-            Return copy_special_str(result, ieeeSign, ieeeExponent <> 0, ieeeMantissa <> 0)
+            Return copy_special_str(result, ieeeSign, ieeeExponent <> 0UI, ieeeMantissa <> 0UI)
         End If
 
         Dim v As floating_decimal_32 = f2d(ieeeMantissa, ieeeExponent)
@@ -419,7 +416,7 @@ Module SingleToString
     End Structure
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Public Function ConvertSingleToString(f As Double) As String
+    Public Function ConvertSingleToString(f As Single) As String
         'INSTANT VB TODO TASK: There is no equivalent to 'stackalloc' in VB:
         Dim allocated As StackAllocSByte26
         Dim result As Span(Of SByte) = MemoryMarshal.CreateSpan(allocated.FirstValue, 26)
