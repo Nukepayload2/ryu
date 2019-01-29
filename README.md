@@ -1,12 +1,13 @@
 # Ryu [![Build Status](https://travis-ci.org/ulfjack/ryu.svg?branch=master)](https://travis-ci.org/ulfjack/ryu)
 
-This project contains a C and a Java implementation of Ryu, an algorithm to
+This project contains a C, a Java, a C# and a VB.NET implementation of Ryu, an algorithm to
 quickly convert floating point numbers to decimal strings. We have tested the
 code on Ubuntu 17.10, MacOS High Sierra, and Windows 10.
 
 The Java implementations are RyuFloat and RyuDouble under src/main/java/. The
-C implementation is in the ryu/ directory. Both cover 32 and 64-bit floating
-point numbers.
+C implementation is in the ryu/ directory. The C# implementation is in the csharp/ directory.
+The VB.NET implementation is in the visualbasic/ directory.
+They cover 32 and 64-bit floating point numbers.
 
 *Note*: The Java implementation follows the Java specification for
 Double.toString [1], which requires outputting at least two digits. Other
@@ -16,9 +17,9 @@ change the Java implementation in the future to support both.
 There is an experimental C low-level API and 128-bit implementation in ryu/.
 These are still subject to change.
 
-All code outside of third_party/ is Copyright Ulf Adams, and may be used in
-accordance with the Apache 2.0 license. Alternatively, the files in the ryu/
-directory may be used in accordance with the Boost 1.0 license.
+All code outside of third_party/ except csharp/ and visualbasic/ is Copyright Ulf Adams. 
+All code outside of third_party/ may be used in accordance with the Apache 2.0 license. 
+Alternatively, the files in the ryu/ directory may be used in accordance with the Boost 1.0 license.
 
 My PLDI'18 paper includes a complete correctness proof of the algorithm:
 https://dl.acm.org/citation.cfm?id=3192369, available under the creative commons
@@ -33,14 +34,15 @@ Other implementations:
 | Julia            | Jacob Quinn        | https://github.com/quinnj/Ryu.jl              |
 | Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
+| C# and VB.NET    | Nukepayload2       | https://github.com/Nukepayload2/ryu           |
 
 [1] https://docs.oracle.com/javase/10/docs/api/java/lang/Double.html#toString(double)
 
 ## Building, Testing, Running
 
-We use the Bazel build system (https://bazel.build). We recommend using the
-latest release, but it should also work with earlier versions. You also need
-to install Jdk 8 and a C/C++ compiler (gcc or clang on Ubuntu, XCode on
+We use the Bazel build system (https://bazel.build) for C and Java implementations.
+We recommend using the latest release, but it should also work with earlier versions. You also need
+to install Jdk 8, .NET Core 2.x SDK and a C/C++ compiler (gcc or clang on Ubuntu, XCode on
 MacOS, or MSVC on Windows).
 
 ### Building with a Custom Compiler
