@@ -27,50 +27,26 @@ Module Common
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Function CopySpecialString(result As Span(Of SByte), sign As Boolean, exponent As Boolean, mantissa As Boolean) As Integer
+    Function CopySpecialString(result As Span(Of Char), sign As Boolean, exponent As Boolean, mantissa As Boolean) As Integer
         If mantissa Then
-            result(0) = AscW("N"c)
-            result(1) = AscW("a"c)
-            result(2) = AscW("N"c)
+            result(0) = "N"c
+            result(1) = "a"c
+            result(2) = "N"c
             Return 3
         End If
         If sign Then
-            result(0) = AscW("-"c)
+            result(0) = "-"c
         End If
         Dim signI As Integer = BooleanToInt32(sign)
         If exponent Then
-            result(0) = AscW("I"c)
-            result(1) = AscW("n"c)
-            result(2) = AscW("f"c)
-            result(3) = AscW("i"c)
-            result(4) = AscW("n"c)
-            result(5) = AscW("i"c)
-            result(6) = AscW("t"c)
-            result(7) = AscW("y"c)
-            Return signI + 8
+            result(0) = "∞"c
+            Return signI + 1
         Else
-            result(0) = AscW("0"c)
-            result(1) = AscW("E"c)
-            result(2) = AscW("0"c)
+            result(0) = "0"c
+            result(1) = "E"c
+            result(2) = "0"c
             Return signI + 3
         End If
     End Function
 
-    <ThreadStatic>
-    Private t_NumberFormatterSharedStringBuilder As StringBuilder
-
-    <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Function CopyAsciiSpanToNewString(result As Span(Of SByte), strLen As Integer) As String
-        If t_NumberFormatterSharedStringBuilder Is Nothing Then
-            t_NumberFormatterSharedStringBuilder = New StringBuilder()
-        Else
-            t_NumberFormatterSharedStringBuilder.Clear()
-        End If
-        Dim sb = t_NumberFormatterSharedStringBuilder
-        For i As Integer = 0 To strLen - 1
-            Dim ch = result(i)
-            sb.Append(Convert.ToChar(ch))
-        Next i
-        Return sb.ToString()
-    End Function
 End Module

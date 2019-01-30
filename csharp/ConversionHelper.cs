@@ -22,12 +22,12 @@ namespace Ryu
             return value ? 1ul : 0ul;
         }
 
-        static void memcpy(Span<sbyte> dest, sbyte[] src, uint srcOffset, int len)
+        static void memcpy(Span<char> dest, char[] src, uint srcOffset, int len)
         {
             src.AsSpan().Slice((int)srcOffset, len).CopyTo(dest);
         }
 
-        static void memcpy(Span<sbyte> dest, sbyte[] src, int srcOffset, int len)
+        static void memcpy(Span<char> dest, char[] src, int srcOffset, int len)
         {
             src.AsSpan().Slice(srcOffset, len).CopyTo(dest);
         }

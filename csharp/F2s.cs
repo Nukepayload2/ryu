@@ -361,13 +361,13 @@ namespace Ryu
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static int to_sbytes(floating_decimal_32 v, bool sign, Span<sbyte> result)
+        static int to_sbytes(floating_decimal_32 v, bool sign, Span<char> result)
         {
             // Step 5: Print the decimal representation.
             int index = 0;
             if (sign)
             {
-                result[index++] = (sbyte)'-';
+                result[index++] = '-';
             }
 
             uint output = v.mantissa;
@@ -409,18 +409,18 @@ namespace Ryu
             {
                 uint c = output << 1;
                 // We can't use memcpy here: the decimal dot goes between these two digits.
-                result[index + olength - i] = (sbyte)DIGIT_TABLE[c + 1];
-                result[index] = (sbyte)DIGIT_TABLE[c];
+                result[index + olength - i] = DIGIT_TABLE[c + 1];
+                result[index] = DIGIT_TABLE[c];
             }
             else
             {
-                result[index] = (sbyte)('0' + output);
+                result[index] = (char)('0' + output);
             }
 
             // Print decimal point if needed.
             if (olength > 1)
             {
-                result[index + 1] = (sbyte)'.';
+                result[index + 1] = '.';
                 index += (int)olength + 1;
             }
             else
@@ -431,11 +431,15 @@ namespace Ryu
             // Print the exponent.
             int exp = v.exponent + (int)olength - 1;
 
-            result[index++] = (sbyte)'E';
+            result[index++] = 'E';
             if (exp < 0)
             {
-                result[index++] = (sbyte)'-';
+                result[index++] = '-';
                 exp = -exp;
+            }
+            else
+            {
+                result[index++] = '+';
             }
 
             if (exp >= 10)
@@ -445,13 +449,13 @@ namespace Ryu
             }
             else
             {
-                result[index++] = (sbyte)('0' + exp);
+                result[index++] = (char)('0' + exp);
             }
 
             return index;
         }
 
-        static int f2s_buffered_n(float f, Span<sbyte> result)
+        static int f2s_buffered_n(float f, Span<char> result)
         {
             // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
             uint bits = (uint)BitConverter.SingleToInt32Bits(f);
@@ -482,13 +486,10 @@ namespace Ryu
 
         public static string SingleToString(float f)
         {
-            Span<sbyte> result = stackalloc sbyte[26];
+            Span<char> result = stackalloc char[16];
             int index = f2s_buffered_n(f, result);
 
-            // Terminate the string.
-            result[index] = default;
-
-            return CopyAsciiSpanToNewString(result, index);
+            return new string(result.Slice(0, index));
         }
     }
 }

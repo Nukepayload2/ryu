@@ -502,13 +502,13 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static int to_sbytes(floating_decimal_64 v, bool sign, Span<sbyte> result)
+        static int to_sbytes(floating_decimal_64 v, bool sign, Span<char> result)
         {
             // Step 5: Print the decimal representation.
             int index = 0;
             if (sign)
             {
-                result[index++] = (sbyte)'-';
+                result[index++] = '-';
             }
 
             ulong output = v.mantissa;
@@ -576,18 +576,18 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
             {
                 uint c = output2 << 1;
                 // We can't use memcpy here: the decimal dot goes between these two digits.
-                result[index + olength - i] = (sbyte)DIGIT_TABLE[c + 1];
-                result[index] = (sbyte)DIGIT_TABLE[c];
+                result[index + olength - i] = DIGIT_TABLE[c + 1];
+                result[index] = DIGIT_TABLE[c];
             }
             else
             {
-                result[index] = (sbyte)('0' + output2);
+                result[index] = (char)((int)'0' + output2);
             }
 
             // Print decimal point if needed.
             if (olength > 1)
             {
-                result[index + 1] = (sbyte)'.';
+                result[index + 1] = '.';
                 index += (int)olength + 1;
             }
             else
@@ -598,18 +598,22 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
             // Print the exponent.
             int exp = v.exponent + (int)olength - 1;
 
-            result[index++] = (sbyte)'E';
+            result[index++] = 'E';
             if (exp < 0)
             {
-                result[index++] = (sbyte)'-';
+                result[index++] = '-';
                 exp = -exp;
+            }
+            else
+            {
+                result[index++] = '+';
             }
 
             if (exp >= 100)
             {
                 int c = exp % 10;
                 memcpy(result.Slice(index), DIGIT_TABLE, 2 * (exp / 10), 2);
-                result[index + 2] = (sbyte)('0' + c);
+                result[index + 2] = (char)('0' + c);
                 index += 3;
             }
             else if (exp >= 10)
@@ -619,13 +623,13 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
             }
             else
             {
-                result[index++] = (sbyte)('0' + exp);
+                result[index++] = (char)('0' + exp);
             }
 
             return index;
         }
 
-        static int d2s_buffered_n(double f, Span<sbyte> result)
+        static int d2s_buffered_n(double f, Span<char> result)
         {
             // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
             ulong bits = (ulong)BitConverter.DoubleToInt64Bits(f);
@@ -655,13 +659,10 @@ static inline ulong mulShiftAll(ulong m, ulong* mul, int j,
 
         public static string DoubleToString(double f)
         {
-            Span<sbyte> result = stackalloc sbyte[26];
+            Span<char> result = stackalloc char[24];
             int index = d2s_buffered_n(f, result);
 
-            // Terminate the string.
-            result[index] = default;
-
-            return CopyAsciiSpanToNewString(result, index);
+            return new string(result.Slice(0, index));
         }
     }
 }

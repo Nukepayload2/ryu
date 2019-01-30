@@ -297,13 +297,13 @@ Module SingleToString
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function To_sbytes(v As FloatingDecimal32, sign As Boolean, result As Span(Of SByte)) As Integer
+    Private Function To_sbytes(v As FloatingDecimal32, sign As Boolean, result As Span(Of Char)) As Integer
         ' Step 5: Print the decimal representation.
         Dim index As Integer = 0
         If sign Then
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = (sbyte)"-"c;
-            result(index) = AscW("-"c)
+            result(index) = "-"c
             index += 1
         End If
 
@@ -343,15 +343,15 @@ Module SingleToString
         If output >= 10 Then
             Dim c As UInteger = output << 1
             ' We can't use memcpy here: the decimal dot goes between these two digits.
-            result(index + olength - i) = CSByte(DIGIT_TABLE(CInt(c + 1UI)))
-            result(index) = CSByte(DIGIT_TABLE(CInt(c)))
+            result(index + olength - i) = DIGIT_TABLE(CInt(c + 1UI))
+            result(index) = DIGIT_TABLE(CInt(c))
         Else
-            result(index) = CSByte(AscW("0"c) + output)
+            result(index) = Convert.ToChar(AscW("0"c) + CInt(output))
         End If
 
         ' Print decimal point if needed.
         If olength > 1 Then
-            result(index + 1) = AscW("."c)
+            result(index + 1) = "."c
             index += CInt(olength) + 1
         Else
             index += 1
@@ -362,14 +362,17 @@ Module SingleToString
 
         'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
         'ORIGINAL LINE: result[index++] = (sbyte)"E"c;
-        result(index) = AscW("E"c)
+        result(index) = "E"c
         index += 1
         If exp < 0 Then
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = (sbyte)"-"c;
-            result(index) = AscW("-"c)
+            result(index) = "-"c
             index += 1
             exp = -exp
+        Else
+            result(index) = "+"c
+            index += 1
         End If
 
         If exp >= 10 Then
@@ -378,7 +381,7 @@ Module SingleToString
         Else
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = (sbyte)("0"c + exp);
-            result(index) = CSByte(AscW("0"c) + exp)
+            result(index) = Convert.ToChar(AscW("0"c) + exp)
             index += 1
         End If
 
@@ -386,7 +389,7 @@ Module SingleToString
     End Function
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Private Function F2s_buffered_n(f As Single, result As Span(Of SByte)) As Integer
+    Private Function F2s_buffered_n(f As Single, result As Span(Of Char)) As Integer
         ' Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
         Dim bits As UInteger = CUInt(BitConverter.SingleToInt32Bits(f))
 
@@ -412,21 +415,18 @@ Module SingleToString
         Return To_sbytes(v, ieeeSign, result)
     End Function
 
-    <StructLayout(LayoutKind.Sequential, Size:=26)>
-    Private Structure StackAllocSByte26
-        Dim FirstValue As SByte
+    <StructLayout(LayoutKind.Sequential, Size:=16 * 2)>
+    Private Structure StackAllocChar16
+        Dim FirstValue As Char
     End Structure
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     Public Function ConvertSingleToString(f As Single) As String
         'INSTANT VB TODO TASK: There is no equivalent to 'stackalloc' in VB:
-        Dim allocated As StackAllocSByte26
-        Dim result As Span(Of SByte) = MemoryMarshal.CreateSpan(allocated.FirstValue, 26)
+        Dim allocated As StackAllocChar16
+        Dim result As Span(Of Char) = MemoryMarshal.CreateSpan(allocated.FirstValue, 16)
         Dim index As Integer = F2s_buffered_n(f, result)
 
-        ' Terminate the string.
-        result(index) = Nothing
-
-        Return CopyAsciiSpanToNewString(result, index)
+        Return New String(result.Slice(0, index))
     End Function
 End Module

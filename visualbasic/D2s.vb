@@ -451,13 +451,13 @@ End Function
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Private Function WriteToSBytes(v As FloatingDecimal64, sign As Boolean, result As Span(Of SByte)) As Integer
+    Private Function WriteToSBytes(v As FloatingDecimal64, sign As Boolean, result As Span(Of Char)) As Integer
         ' Step 5: Print the decimal representation.
         Dim index As Integer = 0
         If sign Then
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = (sbyte)"-"c;
-            result(index) = AscW("-"c)
+            result(index) = "-"c
             index += 1I
         End If
 
@@ -522,15 +522,15 @@ End Function
         If output2 >= 10UI Then
             Dim c As UInteger = output2 << 1UI
             ' We can't use memcpy here: the decimal dot goes between these two digits.
-            result(index + olength - i) = CSByte(DIGIT_TABLE(CInt(c + 1UI)))
-            result(index) = CSByte(DIGIT_TABLE(CInt(c)))
+            result(index + olength - i) = DIGIT_TABLE(CInt(c + 1UI))
+            result(index) = DIGIT_TABLE(CInt(c))
         Else
-            result(index) = CSByte(AscW("0"c) + output2)
+            result(index) = Convert.ToChar(AscW("0"c) + CInt(output2))
         End If
 
         ' Print decimal point if needed.
         If olength > 1 Then
-            result(index + 1) = AscW("."c)
+            result(index + 1) = "."c
             index += olength + 1
         Else
             index += 1
@@ -541,20 +541,23 @@ End Function
 
         'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
         'ORIGINAL LINE: result[index++] = (sbyte)"E"c;
-        result(index) = AscW("E"c)
+        result(index) = "E"c
         index += 1
         If exp < 0 Then
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = (sbyte)"-"c;
-            result(index) = AscW("-"c)
+            result(index) = "-"c
             index += 1
             exp = -exp
+        Else
+            result(index) = "+"c
+            index += 1
         End If
 
         If exp >= 100 Then
             Dim c As Integer = exp Mod 10
             memcpy(result.Slice(index), DIGIT_TABLE, 2 * (exp \ 10), 2)
-            result(index + 2) = CSByte(AscW("0"c) + c)
+            result(index + 2) = Convert.ToChar(AscW("0"c) + c)
             index += 3
         ElseIf exp >= 10 Then
             memcpy(result.Slice(index), DIGIT_TABLE, 2 * exp, 2)
@@ -562,7 +565,7 @@ End Function
         Else
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = (sbyte)("0"c + exp);
-            result(index) = CSByte(AscW("0"c) + exp)
+            result(index) = Convert.ToChar(AscW("0"c) + exp)
             index += 1
         End If
 
@@ -570,7 +573,7 @@ End Function
     End Function
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Private Function DoubleToSByteBuffer(f As Double, result As Span(Of SByte)) As Integer
+    Private Function DoubleToSByteBuffer(f As Double, result As Span(Of Char)) As Integer
         ' Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
         Dim bits As ULong = CULng(BitConverter.DoubleToInt64Bits(f))
 
@@ -595,21 +598,18 @@ End Function
         Return WriteToSBytes(v, ieeeSign, result)
     End Function
 
-    <StructLayout(LayoutKind.Sequential, Size:=26)>
-    Private Structure StackAllocSByte26
-        Dim FirstValue As SByte
+    <StructLayout(LayoutKind.Sequential, Size:=24 * 2)>
+    Private Structure StackAllocChar24
+        Dim FirstValue As Char
     End Structure
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     Public Function ConvertDoubleToString(f As Double) As String
         'INSTANT VB TODO TASK: There is no equivalent to 'stackalloc' in VB:
-        Dim allocated As StackAllocSByte26
-        Dim result As Span(Of SByte) = MemoryMarshal.CreateSpan(allocated.FirstValue, 26)
+        Dim allocated As StackAllocChar24
+        Dim result As Span(Of Char) = MemoryMarshal.CreateSpan(allocated.FirstValue, 24)
         Dim index As Integer = DoubleToSByteBuffer(f, result)
 
-        ' Terminate the string.
-        result(index) = Nothing
-
-        Return CopyAsciiSpanToNewString(result, index)
+        Return New String(result.Slice(0, index))
     End Function
 End Module

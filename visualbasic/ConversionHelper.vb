@@ -12,12 +12,12 @@
     End Function
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Sub memcpy(dest As Span(Of SByte), src() As SByte, srcOffset As UInteger, len As Integer)
+    Sub memcpy(dest As Span(Of Char), src() As Char, srcOffset As UInteger, len As Integer)
         src.AsSpan().Slice(CInt(srcOffset), len).CopyTo(dest)
     End Sub
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Sub memcpy(dest As Span(Of SByte), src() As SByte, srcOffset As Integer, len As Integer)
+    Sub memcpy(dest As Span(Of Char), src() As Char, srcOffset As Integer, len As Integer)
         src.AsSpan().Slice(srcOffset, len).CopyTo(dest)
     End Sub
 End Module
