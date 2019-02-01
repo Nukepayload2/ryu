@@ -1,7 +1,7 @@
 ﻿Imports BenchmarkDotNet.Attributes
 
 <CoreJob>
-<MarkdownExporterAttribute.GitHub, RankColumn>
+<RPlotExporter, MarkdownExporterAttribute.GitHub, RankColumn>
 Public Class BenchmarkCompareWithDoubleToString
     <Params(Math.PI, Math.E, 0.25, 1.0 / 3.0, 1230000000000.0, 4.56E-21)>
     Public Number As Double

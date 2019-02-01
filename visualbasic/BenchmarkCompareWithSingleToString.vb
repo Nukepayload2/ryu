@@ -1,8 +1,8 @@
 ﻿Imports BenchmarkDotNet.Attributes
 
 <CoreJob>
-<MarkdownExporterAttribute.GitHub, RankColumn>
-Public Class BenchmarkCompareWithToString
+<RPlotExporter, MarkdownExporterAttribute.GitHub, RankColumn>
+Public Class BenchmarkCompareWithSingleToString
     <Params(MathF.PI, MathF.E, 0.25F, 1.0F / 3.0F, 1.23E+12F, 4.56E-21F)>
     Public Number As Single
 
