@@ -7,7 +7,7 @@ namespace Ryu
     [RPlotExporter, MarkdownExporterAttribute.GitHub, RankColumn]
     public class BenchmarkCompareWithSingleToString
     {
-        [Params(MathF.PI, MathF.E, 0.25F, 1.0F / (double)3.0F, 1.23E+12F, 4.56E-21F)]
+        [Params(MathF.PI, MathF.E, 0.25F, 1.0F / 3.0F, 1.23E+12F, 4.56E-21F)]
         public float Number;
 
         [Params(100_0000)]

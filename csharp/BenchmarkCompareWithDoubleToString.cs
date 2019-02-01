@@ -13,7 +13,6 @@ namespace Ryu
         [Params(100_0000)]
         public int LoopCount;
 
-        [Obsolete("Types with embedded references are not supported in this version of your compiler.")]
         [Benchmark]
         public void DoubleToStringWithRyu()
         {
