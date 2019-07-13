@@ -12,15 +12,15 @@ Public Class BenchmarkCompareWithSingleToString
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     <Benchmark>
     Public Sub SingleToStringWithRyu()
-        For i = 1 To LoopCount
+        For i = 0 To LoopCount - 1
             ConvertSingleToString(Number)
-        Next
+        Next i
     End Sub
 
     <Benchmark>
     Public Sub SingleToStringWithToString()
-        For i = 1 To LoopCount
+        For i = 0 To LoopCount - 1
             Number.ToString()
-        Next
+        Next i
     End Sub
 End Class
