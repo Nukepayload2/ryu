@@ -20,29 +20,29 @@
         ' Function precondition: v is not a 10-digit number.
         ' (f2s: 9 digits are sufficient for round-tripping.)
         ' (d2fixed: We print 9-digit blocks.)
-        Debug.Assert(v < 1000000000)
-        If v >= 100000000 Then
+        Debug.Assert(v < 1000000000UI)
+        If v >= 100000000UI Then
             Return 9
         End If
-        If v >= 10000000 Then
+        If v >= 10000000UI Then
             Return 8
         End If
-        If v >= 1000000 Then
+        If v >= 1000000UI Then
             Return 7
         End If
-        If v >= 100000 Then
+        If v >= 100000UI Then
             Return 6
         End If
-        If v >= 10000 Then
+        If v >= 10000UI Then
             Return 5
         End If
-        If v >= 1000 Then
+        If v >= 1000UI Then
             Return 4
         End If
-        If v >= 100 Then
+        If v >= 100UI Then
             Return 3
         End If
-        If v >= 10 Then
+        If v >= 10UI Then
             Return 2
         End If
         Return 1
@@ -53,15 +53,15 @@
         ' This approximation works up to the point that the multiplication overflows at e = 3529.
         ' If the multiplication were done in 64 bits, it would fail at 5^4004 which is just greater
         ' than 2^9297.
-        Debug.Assert(e >= 0)
+        Debug.Assert(e >= Nothing)
         Debug.Assert(e <= 3528)
-        Return CInt((((CUInt(e)) * 1217359) >> 19) + 1)
+        Return CInt(((CUInt(e) * 1217359) >> 19) + 1)
     End Function
 
     ' Returns floor(log_10(2^e)).
     Function log10Pow2(e As Integer) As UInteger
         ' The first value this approximation fails for is 2^1651 which is just greater than 10^297.
-        Debug.Assert(e >= 0)
+        Debug.Assert(e >= Nothing)
         Debug.Assert(e <= 1650)
         Return ((CUInt(e)) * 78913UI) >> 18
     End Function
@@ -69,7 +69,7 @@
     ' Returns floor(log_10(5^e)).
     Function log10Pow5(e As Integer) As UInteger
         ' The first value this approximation fails for is 5^2621 which is just greater than 10^1832.
-        Debug.Assert(e >= 0)
+        Debug.Assert(e >= Nothing)
         Debug.Assert(e <= 2620)
         Return ((CUInt(e)) * 732923UI) >> 20
     End Function
@@ -97,7 +97,7 @@
     End Function
 
     Function float_to_bits(f As Single) As UInteger
-        Return CUInt(Math.Truncate(BitConverter.SingleToInt32Bits(f)))
+        Return CUInt(BitConverter.SingleToInt32Bits(f))
     End Function
 
     Function double_to_bits(d As Double) As ULong

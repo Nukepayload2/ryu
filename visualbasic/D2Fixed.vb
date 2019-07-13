@@ -36,7 +36,7 @@ Partial Module D2Fixed
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     Private Sub append_n_digits(olength As Integer, digits As UInteger, result As Span(Of Char))
         Dim i As Integer = 0
-        Do While digits >= 10000
+        Do While digits >= 10000UI
             Dim c As UInteger = digits Mod 10000UI
             digits \= 10000UI
             Dim c0 As UInteger = (c Mod 100UI) << 1UI
@@ -45,13 +45,13 @@ Partial Module D2Fixed
             memcpy(result.Slice(olength - i - 4), DIGIT_TABLE, c1, 2)
             i += 4
         Loop
-        If digits >= 100 Then
+        If digits >= 100UI Then
             Dim c As UInteger = (digits Mod 100UI) << 1UI
             digits \= 100UI
             memcpy(result.Slice(olength - i - 2), DIGIT_TABLE, c, 2)
             i += 2
         End If
-        If digits >= 10 Then
+        If digits >= 10UI Then
             Dim c As UInteger = digits << 1
             memcpy(result.Slice(olength - i - 2), DIGIT_TABLE, c, 2)
         Else
@@ -105,7 +105,7 @@ Partial Module D2Fixed
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     Private Sub append_nine_digits(digits As UInteger, result As Span(Of Char))
-        If digits = 0 Then
+        If digits = Nothing Then
             memset(result, "0"c, 9)
             Return
         End If
@@ -140,7 +140,7 @@ Partial Module D2Fixed
             result(0) = "-"c
         End If
         Dim signI As Integer = Convert.ToInt32(sign)
-        If mantissa <> 0 Then
+        If mantissa <> Nothing Then
             memcpy(result.Slice(signI), "nan", 3)
             Return signI + 3
         End If
@@ -163,7 +163,7 @@ Partial Module D2Fixed
         End If
 
         Dim index As Integer = 0
-        If ieeeExponent = 0 AndAlso ieeeMantissa = 0 Then
+        If ieeeExponent = Nothing AndAlso ieeeMantissa = Nothing Then
             If ieeeSign Then
                 'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
                 'ORIGINAL LINE: result[index++] = "-"c;
@@ -174,7 +174,7 @@ Partial Module D2Fixed
             'ORIGINAL LINE: result[index++] = "0"c;
             result(index) = "0"c
             index += 1
-            If precision > 0 Then
+            If precision > Nothing Then
                 'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
                 'ORIGINAL LINE: result[index++] = "."c;
                 result(index) = "."c
@@ -187,7 +187,7 @@ Partial Module D2Fixed
 
         Dim e2 As Integer
         Dim m2 As ULong
-        If ieeeExponent = 0 Then
+        If ieeeExponent = Nothing Then
             e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS
             m2 = ieeeMantissa
         Else
@@ -207,7 +207,7 @@ Partial Module D2Fixed
             Dim p10bits As UInteger = pow10BitsForIndex(idx)
             Dim len As Integer = CInt(lengthForIndex(idx))
 
-            For i As Integer = len - 1 To 0 Step -1
+            For i As Integer = len - 1 To Nothing Step -1
                 Dim j As UInteger = p10bits - CUInt(e2)
                 ' Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
                 ' a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
@@ -215,7 +215,7 @@ Partial Module D2Fixed
                 If nonzero Then
                     append_nine_digits(digits, result.Slice(index))
                     index += 9
-                ElseIf digits <> 0 Then
+                ElseIf digits <> Nothing Then
                     Dim olength As Integer = decimalLength9(digits)
                     append_n_digits(olength, digits, result.Slice(index))
                     index += olength
@@ -229,18 +229,18 @@ Partial Module D2Fixed
             result(index) = "0"c
             index += 1
         End If
-        If precision > 0 Then
+        If precision > Nothing Then
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = "."c;
             result(index) = "."c
             index += 1
         End If
 
-        If e2 < 0 Then
+        If e2 < Nothing Then
             Dim idx As Integer = -e2 \ 16
 
             Dim blocks As Integer = (precision \ 9 + 1)
-            ' 0 = don't round up; 1 = round up unconditionally; 2 = round up if odd.
+            ' Nothing = don't round up; 1 = round up unconditionally; 2 = round up if odd.
             Dim roundUp As Integer = 0
             Dim i As Integer = 0
             If blocks <= MIN_BLOCK_2(idx) Then
@@ -274,22 +274,22 @@ Partial Module D2Fixed
                     Dim maximum As Integer = precision - 9 * i
                     Dim lastDigit As UInteger = 0
                     Dim k As UInteger = 0
-                    Do While k < 9 - maximum
+                    Do While k < 9UI - CUInt(maximum)
                         lastDigit = digits Mod 10UI
                         digits \= 10UI
                         k += 1UI
                     Loop
 
-                    If lastDigit <> 5 Then
+                    If lastDigit <> 5UI Then
                         roundUp = Convert.ToInt32(lastDigit > 5)
                     Else
                         ' Is m * 10^(additionalDigits + 1) / 2^(-e2) integer?
                         Dim requiredTwos As Integer = -e2 - CInt(precision) - 1
-                        Dim trailingZeros As Boolean = requiredTwos <= 0 OrElse (requiredTwos < 60 AndAlso multipleOfPowerOf2(m2, requiredTwos))
+                        Dim trailingZeros As Boolean = requiredTwos <= Nothing OrElse (requiredTwos < 60 AndAlso multipleOfPowerOf2(m2, requiredTwos))
                         roundUp = If(trailingZeros, 2, 1)
 
                     End If
-                    If maximum > 0 Then
+                    If maximum > Nothing Then
                         append_c_digits(maximum, digits, result.Slice(index))
                         index += maximum
                     End If
@@ -298,14 +298,14 @@ Partial Module D2Fixed
                 i += 1
             Loop
 
-            If roundUp <> 0 Then
+            If roundUp <> Nothing Then
                 Dim roundIndex As Integer = index
-                Dim dotIndex As Integer = 0 ' '.' can't be located at index 0
+                Dim dotIndex As Integer = Nothing ' '.' can't be located at index 0
                 Do
                     roundIndex -= 1
                     If roundIndex = -1 Then
                         result(roundIndex + 1) = "1"c
-                        If dotIndex > 0 Then
+                        If dotIndex > Nothing Then
                             result(dotIndex) = "0"c
                             result(dotIndex + 1) = "."c
                         End If
@@ -318,7 +318,7 @@ Partial Module D2Fixed
                     Dim c As Char = result(roundIndex)
                     If c = "-"c Then
                         result(roundIndex + 1) = "1"c
-                        If dotIndex > 0 Then
+                        If dotIndex > Nothing Then
                             result(dotIndex) = "0"c
                             result(dotIndex + 1) = "."c
                         End If
@@ -336,7 +336,7 @@ Partial Module D2Fixed
                         roundUp = 1
                         Continue Do
                     Else
-                        If roundUp = 2 AndAlso AscW(c) Mod 2 = 0 Then
+                        If roundUp = 2 AndAlso AscW(c) Mod 2 = Nothing Then
                             Exit Do
                         End If
                         result(roundIndex) = Convert.ToChar(AscW(c) + 1)
@@ -346,7 +346,7 @@ Partial Module D2Fixed
             End If
         Else
             memset(result.Slice(index), "0"c, precision)
-            index += CInt(precision)
+            index += precision
         End If
         Return index
     End Function
@@ -362,7 +362,7 @@ Partial Module D2Fixed
         Dim bits As ULong = double_to_bits(d)
 
         ' Decode bits into sign, mantissa, and exponent.
-        Dim ieeeSign As Boolean = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) And 1UL) <> 0
+        Dim ieeeSign As Boolean = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) And 1UL) <> 0UL
         Dim ieeeMantissa As ULong = bits And ((1UL << DOUBLE_MANTISSA_BITS) - 1UL)
         Dim ieeeExponent As UInteger = CUInt((bits >> DOUBLE_MANTISSA_BITS) And ((1UI << DOUBLE_EXPONENT_BITS) - 1UI))
 
@@ -371,7 +371,7 @@ Partial Module D2Fixed
             Return copy_special_str_printf(result, ieeeSign, ieeeMantissa)
         End If
         Dim index As Integer = 0
-        If ieeeExponent = 0 AndAlso ieeeMantissa = 0 Then
+        If ieeeExponent = Nothing AndAlso ieeeMantissa = Nothing Then
             If ieeeSign Then
                 'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
                 'ORIGINAL LINE: result[index++] = "-"c;
@@ -382,7 +382,7 @@ Partial Module D2Fixed
             'ORIGINAL LINE: result[index++] = "0"c;
             result(index) = "0"c
             index += 1
-            If precision > 0 Then
+            If precision > Nothing Then
                 'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
                 'ORIGINAL LINE: result[index++] = "."c;
                 result(index) = "."c
@@ -397,7 +397,7 @@ Partial Module D2Fixed
 
         Dim e2 As Integer
         Dim m2 As ULong
-        If ieeeExponent = 0 Then
+        If ieeeExponent = Nothing Then
             e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS
             m2 = ieeeMantissa
         Else
@@ -422,12 +422,12 @@ Partial Module D2Fixed
             Dim p10bits As UInteger = pow10BitsForIndex(idx)
             Dim len As Integer = CInt(lengthForIndex(idx))
 
-            For i As Integer = len - 1 To 0 Step -1
+            For i As Integer = len - 1 To Nothing Step -1
                 Dim j As Integer = CInt(p10bits) - e2
                 ' Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
                 ' a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
                 digits = mulShift_mod1e9(m2 << 8, POW10_SPLIT(POW10_OFFSET(CInt(idx)) + i), CInt(j + 8))
-                If printedDigits <> 0 Then
+                If printedDigits <> Nothing Then
                     If printedDigits + 9 > precision Then
                         availableDigits = 9
                         Exit For
@@ -435,7 +435,7 @@ Partial Module D2Fixed
                     append_nine_digits(digits, result.Slice(index))
                     index += 9
                     printedDigits += 9
-                ElseIf digits <> 0 Then
+                ElseIf digits <> Nothing Then
                     availableDigits = decimalLength9(digits)
                     exp = i * 9 + CInt(availableDigits) - 1
                     If availableDigits > precision Then
@@ -456,7 +456,7 @@ Partial Module D2Fixed
             Next i
         End If
 
-        If e2 < 0 AndAlso availableDigits = 0 Then
+        If e2 < Nothing AndAlso availableDigits = Nothing Then
             Dim idx As Integer = -e2 \ 16
 
             For i As Integer = MIN_BLOCK_2(idx) To 199
@@ -466,7 +466,7 @@ Partial Module D2Fixed
                 ' a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
                 digits = If(p >= POW10_OFFSET_2(idx + 1), 0UI, mulShift_mod1e9(m2 << 8, POW10_SPLIT_2(CInt(p)), j + 8))
 
-                If printedDigits <> 0 Then
+                If printedDigits <> Nothing Then
                     If printedDigits + 9 > precision Then
                         availableDigits = 9
                         Exit For
@@ -474,7 +474,7 @@ Partial Module D2Fixed
                     append_nine_digits(digits, result.Slice(index))
                     index += 9
                     printedDigits += 9
-                ElseIf digits <> 0 Then
+                ElseIf digits <> Nothing Then
                     availableDigits = decimalLength9(digits)
                     exp = -(i + 1) * 9 + CInt(availableDigits) - 1
                     If availableDigits > precision Then
@@ -497,7 +497,7 @@ Partial Module D2Fixed
 
         Dim maximum As Integer = precision - printedDigits
 
-        If availableDigits = 0 Then
+        If availableDigits = Nothing Then
             digits = 0
         End If
         Dim lastDigit As UInteger = 0
@@ -510,7 +510,7 @@ Partial Module D2Fixed
             Loop
         End If
 
-        ' 0 = don't round up; 1 = round up unconditionally; 2 = round up if odd.
+        ' Nothing = don't round up; 1 = round up unconditionally; 2 = round up if odd.
         Dim roundUp As Integer = 0
         If lastDigit <> 5 Then
             roundUp = Convert.ToInt32(lastDigit > 5)
@@ -519,16 +519,16 @@ Partial Module D2Fixed
             ' precision was already increased by 1, so we don't need to write + 1 here.
             Dim rexp As Integer = CInt(precision) - exp
             Dim requiredTwos As Integer = -e2 - rexp
-            Dim trailingZeros As Boolean = requiredTwos <= 0 OrElse (requiredTwos < 60 AndAlso multipleOfPowerOf2(m2, requiredTwos))
-            If rexp < 0 Then
+            Dim trailingZeros As Boolean = requiredTwos <= Nothing OrElse (requiredTwos < 60 AndAlso multipleOfPowerOf2(m2, requiredTwos))
+            If rexp < Nothing Then
                 Dim requiredFives As Integer = -rexp
                 trailingZeros = trailingZeros AndAlso multipleOfPowerOf5(m2, CUInt(requiredFives))
             End If
             roundUp = If(trailingZeros, 2, 1)
 
         End If
-        If printedDigits <> 0 Then
-            If digits = 0 Then
+        If printedDigits <> Nothing Then
+            If digits = Nothing Then
                 memset(result.Slice(index), "0"c, maximum)
             Else
                 append_c_digits(maximum, digits, result.Slice(index))
@@ -546,7 +546,7 @@ Partial Module D2Fixed
             End If
         End If
 
-        If roundUp <> 0 Then
+        If roundUp <> Nothing Then
             Dim roundIndex As Integer = index
             Do
                 roundIndex -= 1
@@ -568,7 +568,7 @@ Partial Module D2Fixed
                     roundUp = 1
                     Continue Do
                 Else
-                    If roundUp = 2 AndAlso AscW(c) Mod 2 = 0 Then
+                    If roundUp = 2 AndAlso AscW(c) Mod 2 = Nothing Then
                         Exit Do
                     End If
                     result(roundIndex) = Convert.ToChar(AscW(c) + 1)
@@ -580,7 +580,7 @@ Partial Module D2Fixed
         'ORIGINAL LINE: result[index++] = "e"c;
         result(index) = "e"c
         index += 1
-        If exp < 0 Then
+        If exp < Nothing Then
             'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
             'ORIGINAL LINE: result[index++] = "-"c;
             result(index) = "-"c
@@ -614,7 +614,7 @@ Partial Module D2Fixed
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     Public Function DoubleToString(f As Double, precision As Integer) As String
-        If precision < 0 OrElse precision > 1000 Then
+        If precision < Nothing OrElse precision > 1000 Then
             Throw New ArgumentOutOfRangeException(NameOf(precision), "Expected [0, 1000]")
         End If
 

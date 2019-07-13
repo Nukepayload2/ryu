@@ -59,13 +59,13 @@
     End Function
 
     Function mod1e9(x As ULong) As UInteger
-        Return CUInt(x - 1000000000 * div1e9(x))
+        Return CUInt(x - 1000000000UL * div1e9(x))
     End Function
 
     Function pow5Factor(value As ULong) As UInteger
         Dim count As UInteger = 0
         Do
-            Debug.Assert(value <> 0)
+            Debug.Assert(value <> Nothing)
             Dim q As ULong = div5(value)
             Dim r As UInteger = (CUInt(value)) - 5UI * (CUInt(q))
             If r <> 0 Then
@@ -85,9 +85,9 @@
 
     ' Returns true if value is divisible by 2^p.
     Function multipleOfPowerOf2(value As ULong, p As Integer) As Boolean
-        Debug.Assert(value <> 0)
+        Debug.Assert(value <> Nothing)
         ' return __builtin_ctzll(value) >= p;
-        Return (value And ((1UL << p) - 1UL)) = 0
+        Return (value And ((1UL << p) - 1UL)) = Nothing
     End Function
 
 End Module

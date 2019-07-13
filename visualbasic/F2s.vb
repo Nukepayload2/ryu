@@ -14,7 +14,7 @@ Module F2s
     Private Function pow5Factor(value As UInteger) As UInteger
         Dim count As UInteger = 0
         Do
-            Debug.Assert(value <> 0)
+            Debug.Assert(value <> Nothing)
             Dim q As UInteger = value \ 5UI
             Dim r As UInteger = value Mod 5UI
             If r <> 0 Then
@@ -301,7 +301,7 @@ Module F2s
         Dim ieeeExponent As UInteger = (bits >> FLOAT_MANTISSA_BITS) And ((1UI << FLOAT_EXPONENT_BITS) - 1UI)
 
         ' Case distinction; exit early for the easy cases.
-        If ieeeExponent = ((1UI << FLOAT_EXPONENT_BITS) - 1UI) OrElse (ieeeExponent = 0 AndAlso ieeeMantissa = 0) Then
+        If ieeeExponent = ((1UI << FLOAT_EXPONENT_BITS) - 1UI) OrElse (ieeeExponent = 0 AndAlso ieeeMantissa = Nothing) Then
             Return copy_special_str(result, ieeeSign, Convert.ToBoolean(ieeeExponent), Convert.ToBoolean(ieeeMantissa))
         End If
 
