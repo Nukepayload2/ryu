@@ -1,4 +1,5 @@
-﻿Imports System.Runtime.InteropServices
+﻿Imports System.Runtime.CompilerServices
+Imports System.Runtime.InteropServices
 
 Public Module D2s
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
@@ -472,8 +473,15 @@ Public Module D2s
         Dim FirstValue As Char
     End Structure
 
+#Disable Warning BC40000
+    Public Function DoubleToString(f As Double) As String
+        Return DoubleToStringInternal(f)
+    End Function
+#Enable Warning BC40000
+
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Public Function ConvertDoubleToString(f As Double) As String
+    Private Function DoubleToStringInternal(f As Double) As String
         Dim allocated As StackAllocChar24
         Dim result As Span(Of Char) = MemoryMarshal.CreateSpan(allocated.FirstValue, 24)
         Dim index As Integer = d2s_buffered_n(f, result)

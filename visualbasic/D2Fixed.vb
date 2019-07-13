@@ -1,7 +1,8 @@
 ﻿Imports System.Buffers
+Imports System.Runtime.CompilerServices
 Imports System.Runtime.InteropServices
 
-Partial Module D2Fixed
+Public Module D2Fixed
     Private Const POW10_ADDITIONAL_BITS As Integer = 120
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
@@ -577,19 +578,14 @@ Partial Module D2Fixed
                 End If
             Loop
         End If
-        'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
-        'ORIGINAL LINE: result[index++] = "e"c;
+
         result(index) = "e"c
         index += 1
         If exp < Nothing Then
-            'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
-            'ORIGINAL LINE: result[index++] = "-"c;
             result(index) = "-"c
             index += 1
             exp = -exp
         Else
-            'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
-            'ORIGINAL LINE: result[index++] = "+"c;
             result(index) = "+"c
             index += 1
         End If
@@ -607,7 +603,7 @@ Partial Module D2Fixed
         Return index
     End Function
 
-    <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
+#Disable Warning BC40000
     Public Function DoubleToString(f As Double, precision As Integer) As String
         If precision < 0 Then
             Throw New ArgumentOutOfRangeException(NameOf(precision), "Expected [0, 1000]")
@@ -619,14 +615,17 @@ Partial Module D2Fixed
             Return DoubleToStringRefStruct(f, precision)
         End If
     End Function
+#Enable Warning BC40000
 
     <StructLayout(LayoutKind.Sequential, Size:=24 * 2)>
     Private Structure StackAllocChar24
         Dim FirstValue As Char
     End Structure
 
+    <MethodImpl(MethodImplOptions.NoInlining)> ' DoubleToString should not always stackalloc 24 chars.
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     Private Function DoubleToStringRefStruct(f As Double, precision As Integer) As String
+        Debug.Assert(precision >= 0)
         Debug.Assert(precision <= 16) ' precision + Len("-1.E+000")
         Dim stackAlloc As New StackAllocChar24
         Dim span = MemoryMarshal.CreateSpan(stackAlloc.FirstValue, 24)

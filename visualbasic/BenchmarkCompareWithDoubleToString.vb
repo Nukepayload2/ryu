@@ -9,11 +9,10 @@ Public Class BenchmarkCompareWithDoubleToString
     <Params(100_0000)>
     Public LoopCount As Integer
 
-    <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     <Benchmark>
     Public Sub DoubleToStringWithRyu()
         For i = 0 To LoopCount - 1
-            ConvertDoubleToString(Number)
+            D2s.DoubleToString(Number)
         Next i
     End Sub
 

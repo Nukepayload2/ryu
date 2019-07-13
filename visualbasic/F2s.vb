@@ -1,4 +1,5 @@
-﻿Imports System.Runtime.InteropServices
+﻿Imports System.Runtime.CompilerServices
+Imports System.Runtime.InteropServices
 
 Public Module F2s
     Private Const FLOAT_MANTISSA_BITS As Integer = 23
@@ -322,8 +323,15 @@ Public Module F2s
         Dim FirstValue As Char
     End Structure
 
+#Disable Warning BC40000
+    Public Function SingleToString(f As Single) As String
+        Return SingleToStringInternal(f)
+    End Function
+#Enable Warning BC40000
+
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Public Function ConvertSingleToString(f As Single) As String
+    Private Function SingleToStringInternal(f As Single) As String
         Dim allocated As StackAllocChar16
         Dim result As Span(Of Char) = MemoryMarshal.CreateSpan(allocated.FirstValue, 16)
         Dim index As Integer = f2s_buffered_n(f, result)

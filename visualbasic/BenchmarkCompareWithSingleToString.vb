@@ -9,11 +9,10 @@ Public Class BenchmarkCompareWithSingleToString
     <Params(100_0000)>
     Public LoopCount As Integer
 
-    <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     <Benchmark>
     Public Sub SingleToStringWithRyu()
         For i = 0 To LoopCount - 1
-            ConvertSingleToString(Number)
+            SingleToString(Number)
         Next i
     End Sub
 
