@@ -1,10 +1,15 @@
-﻿namespace Ryu
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Ryu
 {
-    partial class Global // DigitTable
+    partial class Global
     {
+
         // A table of all two-digit numbers. This is used to speed up decimal digit
         // generation by copying pairs of digits into the final output.
-        static readonly char[] DIGIT_TABLE = {
+        static char[] DIGIT_TABLE = new[]{
           '0','0','0','1','0','2','0','3','0','4','0','5','0','6','0','7','0','8','0','9',
           '1','0','1','1','1','2','1','3','1','4','1','5','1','6','1','7','1','8','1','9',
           '2','0','2','1','2','2','2','3','2','4','2','5','2','6','2','7','2','8','2','9',
@@ -16,5 +21,6 @@
           '8','0','8','1','8','2','8','3','8','4','8','5','8','6','8','7','8','8','8','9',
           '9','0','9','1','9','2','9','3','9','4','9','5','9','6','9','7','9','8','9','9'
         };
+
     }
 }
