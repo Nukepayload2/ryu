@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -687,14 +688,36 @@ namespace Ryu
 
         public static string DoubleToString(double f, int precision)
         {
-            if (precision < 0 || precision > 1000)
+            if (precision < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(precision), "Expected [0, 1000]");
             }
-            Span<char> result = stackalloc char[precision + "-1.E+000 ".Length];
-            int index = d2exp_buffered_n(f, precision, result);
-
-            return new string(result.Slice(0, index));
+            if (precision > 16)
+            {
+                return DoubleToStringArrayPool(f, precision);
+            }
+            return DoubleToStringRefStruct(f, precision);
         }
+
+        private static string DoubleToStringRefStruct(double f, int precision)
+        {
+            Debug.Assert(precision >= 0);
+            Debug.Assert(precision <= 16);
+            Span<char> span = stackalloc char[precision + 8];
+            int index = d2exp_buffered_n(f, precision, span);
+            return new string(span.Slice(0, index));
+        }
+
+        private static string DoubleToStringArrayPool(double f, int precision)
+        {
+            ArrayPool<char> pool = ArrayPool<char>.Shared;
+            char[] rented = pool.Rent(precision + 8);
+            Span<char> rentedSpan = rented.AsSpan();
+            int index = d2exp_buffered_n(f, precision, rented);
+            string result = new string(rentedSpan.Slice(0, index));
+            pool.Return(rented);
+            return result;
+        }
+
     }
 }
