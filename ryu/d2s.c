@@ -53,33 +53,6 @@
 #include "ryu/d2s.h"
 #include "ryu/d2s_intrinsics.h"
 
-static inline uint32_t pow5Factor(uint64_t value) {
-  uint32_t count = 0;
-  for (;;) {
-    assert(value != 0);
-    const uint64_t q = div5(value);
-    const uint32_t r = (uint32_t) (value - 5 * q);
-    if (r != 0) {
-      break;
-    }
-    value = q;
-    ++count;
-  }
-  return count;
-}
-
-// Returns true if value is divisible by 5^p.
-static inline bool multipleOfPowerOf5(const uint64_t value, const uint32_t p) {
-  // I tried a case distinction on p, but there was no performance difference.
-  return pow5Factor(value) >= p;
-}
-
-// Returns true if value is divisible by 2^p.
-static inline bool multipleOfPowerOf2(const uint64_t value, const uint32_t p) {
-  // return __builtin_ctzll(value) >= p;
-  return (value & ((1ull << p) - 1)) == 0;
-}
-
 // We need a 64x128-bit multiplication and a subsequent 128-bit shift.
 // Multiplication:
 //   The 64-bit factor is variable and passed in, the 128-bit factor comes
@@ -204,7 +177,7 @@ static inline uint64_t mulShiftAll(uint64_t m, const uint64_t* const mul, const 
 
 #endif // HAS_64_BIT_INTRINSICS
 
-static inline uint32_t decimalLength(const uint64_t v) {
+static inline uint32_t decimalLength17(const uint64_t v) {
   // This is slightly faster than a loop.
   // The average output length is 16.38 digits, so we check high-to-low.
   // Function precondition: v is not an 18, 19, or 20-digit number.
@@ -232,6 +205,8 @@ static inline uint32_t decimalLength(const uint64_t v) {
 // A floating decimal representing m * 10^e.
 typedef struct floating_decimal_64 {
   uint64_t mantissa;
+  // Decimal exponent's range is -324 to 308
+  // inclusive, and can fit in a short if needed.
   int32_t exponent;
 } floating_decimal_64;
 
@@ -288,7 +263,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
       // This should use q <= 22, but I think 21 is also safe. Smaller values
       // may still be safe, but it's more difficult to reason about them.
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
-      const uint32_t mvMod5 = (uint32_t) (mv - 5 * div5(mv));
+      const uint32_t mvMod5 = ((uint32_t) mv) - 5 * ((uint32_t) div5(mv));
       if (mvMod5 == 0) {
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
       } else if (acceptBounds) {
@@ -332,12 +307,11 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
         --vp;
       }
     } else if (q < 63) { // TODO(ulfjack): Use a tighter bound here.
-      // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q - 1
-      // <=> ntz(mv) >= q - 1 && pow5Factor(mv) - e2 >= q - 1
-      // <=> ntz(mv) >= q - 1 (e2 is negative and -e2 >= q)
-      // <=> (mv & ((1 << (q - 1)) - 1)) == 0
-      // We also need to make sure that the left shift does not overflow.
-      vrIsTrailingZeros = multipleOfPowerOf2(mv, q - 1);
+      // We want to know if the full product has at least q trailing zeros.
+      // We need to compute min(p2(mv), p5(mv) - e2) >= q
+      // <=> p2(mv) >= q && p5(mv) - e2 >= q
+      // <=> p2(mv) >= q (because -e2 >= q)
+      vrIsTrailingZeros = multipleOfPowerOf2(mv, q);
 #ifdef RYU_DEBUG
       printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
@@ -363,9 +337,9 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
       if (vpDiv10 <= vmDiv10) {
         break;
       }
-      const uint32_t vmMod10 = (uint32_t) (vm - 10 * vmDiv10);
+      const uint32_t vmMod10 = ((uint32_t) vm) - 10 * ((uint32_t) vmDiv10);
       const uint64_t vrDiv10 = div10(vr);
-      const uint32_t vrMod10 = (uint32_t) (vr - 10 * vrDiv10);
+      const uint32_t vrMod10 = ((uint32_t) vr) - 10 * ((uint32_t) vrDiv10);
       vmIsTrailingZeros &= vmMod10 == 0;
       vrIsTrailingZeros &= lastRemovedDigit == 0;
       lastRemovedDigit = (uint8_t) vrMod10;
@@ -381,13 +355,13 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     if (vmIsTrailingZeros) {
       for (;;) {
         const uint64_t vmDiv10 = div10(vm);
-        const uint32_t vmMod10 = (uint32_t) (vm - 10 * vmDiv10);
+        const uint32_t vmMod10 = ((uint32_t) vm) - 10 * ((uint32_t) vmDiv10);
         if (vmMod10 != 0) {
           break;
         }
         const uint64_t vpDiv10 = div10(vp);
         const uint64_t vrDiv10 = div10(vr);
-        const uint32_t vrMod10 = (uint32_t) (vr - 10 * vrDiv10);
+        const uint32_t vrMod10 = ((uint32_t) vr) - 10 * ((uint32_t) vrDiv10);
         vrIsTrailingZeros &= lastRemovedDigit == 0;
         lastRemovedDigit = (uint8_t) vrMod10;
         vr = vrDiv10;
@@ -413,7 +387,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     const uint64_t vmDiv100 = div100(vm);
     if (vpDiv100 > vmDiv100) { // Optimization: remove two digits at a time (~86.2%).
       const uint64_t vrDiv100 = div100(vr);
-      const uint32_t vrMod100 = (uint32_t) (vr - 100 * vrDiv100);
+      const uint32_t vrMod100 = ((uint32_t) vr) - 100 * ((uint32_t) vrDiv100);
       roundUp = vrMod100 >= 50;
       vr = vrDiv100;
       vp = vpDiv100;
@@ -431,7 +405,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
         break;
       }
       const uint64_t vrDiv10 = div10(vr);
-      const uint32_t vrMod10 = (uint32_t) (vr - 10 * vrDiv10);
+      const uint32_t vrMod10 = ((uint32_t) vr) - 10 * ((uint32_t) vrDiv10);
       roundUp = vrMod10 >= 5;
       vr = vrDiv10;
       vp = vpDiv10;
@@ -467,7 +441,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   }
 
   uint64_t output = v.mantissa;
-  const uint32_t olength = decimalLength(output);
+  const uint32_t olength = decimalLength17(output);
 
 #ifdef RYU_DEBUG
   printf("DIGITS=%" PRIu64 "\n", v.mantissa);
@@ -491,7 +465,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   if ((output >> 32) != 0) {
     // Expensive 64-bit division.
     const uint64_t q = div1e8(output);
-    uint32_t output2 = (uint32_t) (output - 100000000 * q);
+    uint32_t output2 = ((uint32_t) output) - 100000000 * ((uint32_t) q);
     output = q;
 
     const uint32_t c = output2 % 10000;
@@ -567,6 +541,38 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   return index;
 }
 
+static inline bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t ieeeExponent,
+  floating_decimal_64* const v) {
+  const uint64_t m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
+  const int32_t e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
+
+  if (e2 > 0) {
+    // f = m2 * 2^e2 >= 2^53 is an integer.
+    // Ignore this case for now.
+    return false;
+  }
+
+  if (e2 < -52) {
+    // f < 1.
+    return false;
+  }
+
+  // Since 2^52 <= m2 < 2^53 and 0 <= -e2 <= 52: 1 <= f = m2 / 2^-e2 < 2^53.
+  // Test if the lower -e2 bits of the significand are 0, i.e. whether the fraction is 0.
+  const uint64_t mask = (1ull << -e2) - 1;
+  const uint64_t fraction = m2 & mask;
+  if (fraction != 0) {
+    return false;
+  }
+
+  // f is an integer in the range [1, 2^53).
+  // Note: mantissa might contain trailing (decimal) 0's.
+  // Note: since 2^53 < 10^16, there is no need to adjust decimalLength17().
+  v->mantissa = m2 >> -e2;
+  v->exponent = 0;
+  return true;
+}
+
 int d2s_buffered_n(double f, char* result) {
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
   const uint64_t bits = double_to_bits(f);
@@ -588,7 +594,26 @@ int d2s_buffered_n(double f, char* result) {
     return copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
   }
 
-  const floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent);
+  floating_decimal_64 v;
+  const bool isSmallInt = d2d_small_int(ieeeMantissa, ieeeExponent, &v);
+  if (isSmallInt) {
+    // For small integers in the range [1, 2^53), v.mantissa might contain trailing (decimal) zeros.
+    // For scientific notation we need to move these zeros into the exponent.
+    // (This is not needed for fixed-point notation, so it might be beneficial to trim
+    // trailing zeros in to_chars only if needed - once fixed-point notation output is implemented.)
+    for (;;) {
+      const uint64_t q = div10(v.mantissa);
+      const uint32_t r = ((uint32_t) v.mantissa) - 10 * ((uint32_t) q);
+      if (r != 0) {
+        break;
+      }
+      v.mantissa = q;
+      ++v.exponent;
+    }
+  } else {
+    v = d2d(ieeeMantissa, ieeeExponent);
+  }
+
   return to_chars(v, ieeeSign, result);
 }
 
