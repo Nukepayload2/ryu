@@ -1,6 +1,6 @@
 ﻿Imports System.Runtime.InteropServices
 
-Module F2s
+Public Module F2s
     Private Const FLOAT_MANTISSA_BITS As Integer = 23
     Private Const FLOAT_EXPONENT_BITS As Integer = 8
     Private Const FLOAT_BIAS As Integer = 127

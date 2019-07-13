@@ -1,4 +1,5 @@
 ﻿Imports System.Buffers
+Imports System.Runtime.InteropServices
 
 Partial Module D2Fixed
     Private Const POW10_ADDITIONAL_BITS As Integer = 120
@@ -607,22 +608,40 @@ Partial Module D2Fixed
     End Function
 
     <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
-    Private Sub d2exp_buffered(d As Double, precision As Integer, result As Span(Of Char))
-        Dim len As Integer = d2exp_buffered_n(d, precision, result)
-        result(len) = Nothing
-    End Sub
-
-    <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
     Public Function DoubleToString(f As Double, precision As Integer) As String
-        If precision < Nothing OrElse precision > 1000 Then
+        If precision < 0 Then
             Throw New ArgumentOutOfRangeException(NameOf(precision), "Expected [0, 1000]")
         End If
 
+        If precision > 16 Then
+            Return DoubleToStringArrayPool(f, precision)
+        Else
+            Return DoubleToStringRefStruct(f, precision)
+        End If
+    End Function
+
+    <StructLayout(LayoutKind.Sequential, Size:=24 * 2)>
+    Private Structure StackAllocChar24
+        Dim FirstValue As Char
+    End Structure
+
+    <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
+    Private Function DoubleToStringRefStruct(f As Double, precision As Integer) As String
+        Debug.Assert(precision <= 16) ' precision + Len("-1.E+000")
+        Dim stackAlloc As New StackAllocChar24
+        Dim span = MemoryMarshal.CreateSpan(stackAlloc.FirstValue, 24)
+        Dim index As Integer = d2exp_buffered_n(f, precision, span)
+        Return New String(span.Slice(0, index))
+    End Function
+
+    <Obsolete("Types with embedded references are not supported in this version of your compiler.")>
+    Private Function DoubleToStringArrayPool(f As Double, precision As Integer) As String
         Dim pool As ArrayPool(Of Char) = ArrayPool(Of Char).Shared
-        Dim rented = pool.Rent(precision + "-1.E+000 ".Length)
+        Dim rented = pool.Rent(precision + 8)
         Dim rentedSpan = rented.AsSpan
         Dim index As Integer = d2exp_buffered_n(f, precision, rented)
+        Dim result As New String(rentedSpan.Slice(0, index))
         pool.Return(rented)
-        Return New String(rentedSpan.Slice(0, index))
+        Return result
     End Function
 End Module
